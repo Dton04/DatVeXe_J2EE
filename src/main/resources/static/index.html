@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BusTicket</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="container header__inner">
+        <div class="brand">
+          <div class="brand__logo" aria-hidden="true">🚌</div>
+          <div class="brand__name">BUSTICKET</div>
+        </div>
+
+        <nav class="header__nav" aria-label="Điều hướng">
+          <a class="nav__link" href="#lookup">Tra cứu vé</a>
+          <a class="nav__link" href="#contact">Liên hệ</a>
+        </nav>
+
+        <div class="header__actions">
+          <button id="loginBtn" class="btn btn--ghost" type="button">Đăng nhập</button>
+          <button id="accountBtn" class="btn btn--secondary hidden" type="button">Tài khoản</button>
+          <button id="logoutBtn" class="btn btn--secondary hidden" type="button">Đăng xuất</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="hero">
+        <div class="container hero__inner">
+          <div class="hero__copy">
+            <h1>Hành trình an tâm,<br />bắt đầu từ một cú chạm</h1>
+            <p>Đặt vé xe khách chất lượng cao, an toàn và tiết kiệm nhất thị trường.</p>
+          </div>
+
+          <div class="search">
+            <div class="search__tabs" role="tablist" aria-label="Loại chuyến">
+              <button id="tabOneWay" class="pill pill--active" type="button">Một chiều</button>
+              <button id="tabRoundTrip" class="pill" type="button">Khứ hồi</button>
+            </div>
+
+            <div id="searchMessage" class="message hidden"></div>
+
+            <form id="searchForm" class="search__form">
+              <label class="search__field">
+                <span class="search__label">Điểm đi</span>
+                <input name="origin" type="text" placeholder="Ví dụ: Hà Nội" />
+              </label>
+              <label class="search__field">
+                <span class="search__label">Điểm đến</span>
+                <input name="destination" type="text" placeholder="Ví dụ: Sài Gòn" />
+              </label>
+              <label class="search__field">
+                <span class="search__label">Ngày đi</span>
+                <input name="depart_date" type="date" />
+              </label>
+              <label id="returnDateField" class="search__field hidden">
+                <span class="search__label">Ngày về</span>
+                <input name="return_date" type="date" />
+              </label>
+              <button class="btn btn--primary btn--search" type="submit">
+                <span class="btn__icon" aria-hidden="true">🔎</span>
+                Tìm chuyến
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container section__head">
+          <div>
+            <h2>Gợi ý hành trình</h2>
+            <p class="muted">Các chuyến xe phổ biến với mức giá ưu đãi nhất</p>
+          </div>
+          <a class="link" href="#all-routes">Xem tất cả →</a>
+        </div>
+
+        <div class="container routes">
+          <article class="route-card">
+            <div class="route-card__media route-card__media--a"></div>
+            <div class="route-card__body">
+              <div class="route-card__title">Sài Gòn - Đà Lạt</div>
+              <div class="route-card__meta">Khoảng 300km • 6 giờ</div>
+              <div class="route-card__price">250.000đ</div>
+            </div>
+          </article>
+          <article class="route-card">
+            <div class="route-card__media route-card__media--b"></div>
+            <div class="route-card__body">
+              <div class="route-card__title">Hà Nội - Sapa</div>
+              <div class="route-card__meta">Khoảng 320km • 5.5 giờ</div>
+              <div class="route-card__price">350.000đ</div>
+            </div>
+          </article>
+          <article class="route-card">
+            <div class="route-card__media route-card__media--c"></div>
+            <div class="route-card__body">
+              <div class="route-card__title">Đà Nẵng - Huế</div>
+              <div class="route-card__meta">Khoảng 100km • 2 giờ</div>
+              <div class="route-card__price">120.000đ</div>
+            </div>
+          </article>
+          <article class="route-card">
+            <div class="route-card__media route-card__media--d"></div>
+            <div class="route-card__body">
+              <div class="route-card__title">Sài Gòn - Cần Thơ</div>
+              <div class="route-card__meta">Khoảng 170km • 3.5 giờ</div>
+              <div class="route-card__price">180.000đ</div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section section--muted">
+        <div class="container services__head">
+          <h2>Dịch vụ chuẩn 5 sao</h2>
+          <p class="muted">Cam kết mang lại trải nghiệm di chuyển thoải mái và tiện nghi</p>
+        </div>
+
+        <div class="container services">
+          <article class="service-card">
+            <div class="service-card__icon" aria-hidden="true">🚌</div>
+            <div class="service-card__title">Xe Limousine Đẳng Cấp</div>
+            <div class="service-card__desc">Ghế rộng rãi, ngả sâu, hỗ trợ massage.</div>
+          </article>
+          <article class="service-card">
+            <div class="service-card__icon" aria-hidden="true">📶</div>
+            <div class="service-card__title">Wifi & Giải trí Miễn Phí</div>
+            <div class="service-card__desc">Kết nối internet tốc độ cao trong suốt hành trình.</div>
+          </article>
+          <article class="service-card">
+            <div class="service-card__icon" aria-hidden="true">🧊</div>
+            <div class="service-card__title">Khăn lạnh & Nước suối</div>
+            <div class="service-card__desc">Phục vụ tận tình cho mỗi hành khách.</div>
+          </article>
+        </div>
+      </section>
+
+      <section id="lookup" class="section">
+        <div class="container lookup">
+          <div>
+            <h2>Tra cứu vé</h2>
+            <p class="muted">Nhập mã vé và số điện thoại để xem thông tin vé.</p>
+          </div>
+          <div class="lookup__box">
+            <div class="lookup__row">
+              <input type="text" placeholder="Mã vé" />
+              <input type="tel" placeholder="Số điện thoại" />
+              <button class="btn btn--primary" type="button">Tra cứu</button>
+            </div>
+            <div class="muted">Tính năng này sẽ được nối với API tra cứu vé.</div>
+          </div>
+        </div>
+      </section>
+
+      <footer id="contact" class="footer">
+        <div class="container footer__grid">
+          <div class="footer__brand">
+            <div class="brand">
+              <div class="brand__logo" aria-hidden="true">🚌</div>
+              <div class="brand__name">BUSTICKET</div>
+            </div>
+            <div class="muted">Nền tảng đặt vé xe khách trực tuyến.</div>
+          </div>
+
+          <div class="footer__col">
+            <div class="footer__title">Dành cho hành khách</div>
+            <a class="footer__link" href="#lookup">Tra cứu vé</a>
+            <a class="footer__link" href="#">Chính sách đặt vé</a>
+            <a class="footer__link" href="#">Điều khoản sử dụng</a>
+          </div>
+
+          <div class="footer__col">
+            <div class="footer__title">Liên hệ</div>
+            <div class="footer__line">Hotline: 1900 1234</div>
+            <div class="footer__line">Email: support@busticket.local</div>
+            <div class="footer__line">TP. Hồ Chí Minh</div>
+          </div>
+        </div>
+        <div class="container footer__bottom muted">© 2026 BusTicket</div>
+      </footer>
+    </main>
+
+    <div id="authModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Đăng nhập hoặc đăng ký">
+      <div class="modal__backdrop" data-close="authModal"></div>
+      <div class="modal__panel">
+        <div class="modal__head">
+          <div class="modal__title">Tài khoản</div>
+          <button class="icon-btn" type="button" data-close="authModal" aria-label="Đóng">✕</button>
+        </div>
+
+        <div class="tabs">
+          <button id="tabLogin" class="tab tab--active" type="button">Đăng nhập</button>
+          <button id="tabRegister" class="tab" type="button">Đăng ký</button>
+        </div>
+
+        <div id="authMessage" class="message hidden"></div>
+
+        <form id="loginForm" class="form">
+          <label class="field">
+            <span class="field__label">Email</span>
+            <input name="email" type="email" autocomplete="email" required />
+          </label>
+          <label class="field">
+            <span class="field__label">Mật khẩu</span>
+            <input name="password" type="password" autocomplete="current-password" required />
+          </label>
+          <button class="btn btn--primary" type="submit">Đăng nhập</button>
+        </form>
+
+        <form id="registerForm" class="form hidden">
+          <label class="field">
+            <span class="field__label">Họ tên</span>
+            <input name="full_name" type="text" autocomplete="name" required />
+          </label>
+          <label class="field">
+            <span class="field__label">Email</span>
+            <input name="email" type="email" autocomplete="email" required />
+          </label>
+          <label class="field">
+            <span class="field__label">Mật khẩu</span>
+            <input name="password" type="password" autocomplete="new-password" required />
+          </label>
+          <button class="btn btn--primary" type="submit">Tạo tài khoản</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="accountModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Thông tin tài khoản">
+      <div class="modal__backdrop" data-close="accountModal"></div>
+      <div class="modal__panel">
+        <div class="modal__head">
+          <div class="modal__title">Tài khoản</div>
+          <button class="icon-btn" type="button" data-close="accountModal" aria-label="Đóng">✕</button>
+        </div>
+
+        <div class="card card--flat">
+          <div class="profile">
+            <div class="profile__row">
+              <div class="profile__label">User ID</div>
+              <div id="profileUserId" class="profile__value">-</div>
+            </div>
+            <div class="profile__row">
+              <div class="profile__label">Họ tên</div>
+              <div id="profileFullName" class="profile__value">-</div>
+            </div>
+            <div class="profile__row">
+              <div class="profile__label">Role</div>
+              <div id="profileRole" class="profile__value">-</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="card__title">Đổi mật khẩu</div>
+        <div id="passwordMessage" class="message hidden"></div>
+        <form id="changePasswordForm" class="form">
+          <label class="field">
+            <span class="field__label">Mật khẩu cũ</span>
+            <input name="old_pass" type="password" autocomplete="current-password" required />
+          </label>
+          <label class="field">
+            <span class="field__label">Mật khẩu mới</span>
+            <input name="new_pass" type="password" autocomplete="new-password" required />
+          </label>
+          <button class="btn btn--primary" type="submit">Cập nhật</button>
+        </form>
+      </div>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
