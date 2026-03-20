@@ -43,16 +43,15 @@ public class SecurityConfig {
                 .requestMatchers("/", "/index.html", "/app.js", "/styles.css", "/favicon.ico").permitAll()
                 .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                .anyRequest().authenticated()
-        );
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated());
 
         http.exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint((request, response, authException) -> {
                     ApiErrorResponse body = new ApiErrorResponse(
                             ErrorCodeConstants.UNAUTHORIZED,
                             HttpStatus.UNAUTHORIZED.value(),
-                            "Unauthorized"
-                    );
+                            "Unauthorized");
                     response.setStatus(HttpStatus.UNAUTHORIZED.value());
                     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                     response.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -62,14 +61,12 @@ public class SecurityConfig {
                     ApiErrorResponse body = new ApiErrorResponse(
                             ErrorCodeConstants.FORBIDDEN,
                             HttpStatus.FORBIDDEN.value(),
-                            "Forbidden"
-                    );
+                            "Forbidden");
                     response.setStatus(HttpStatus.FORBIDDEN.value());
                     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                     response.setCharacterEncoding(StandardCharsets.UTF_8.name());
                     response.getWriter().write(objectMapper.writeValueAsString(body));
-                })
-        );
+                }));
 
         http.httpBasic(Customizer.withDefaults());
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
