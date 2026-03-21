@@ -14,37 +14,36 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
-@Table(name = "trips")
-public class Trip {
+@Table(name = "trip_stops")
+public class TripStop {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "trip_id", nullable = false)
+    @Column(name = "trip_stop_id", nullable = false)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "route_id", nullable = false)
-    private Route route;
+    @JoinColumn(name = "trip_id", nullable = false)
+    private Trip trip;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "bus_id", nullable = false)
-    private Bus bus;
-
-    @Column(name = "departure_time", nullable = false)
-    private Instant departureTime;
-
-    @Column(name = "arrival_time")
-    private Instant arrivalTime;
-
-    @Column(name = "actual_price", nullable = false)
-    private BigDecimal actualPrice;
+    @JoinColumn(name = "station_id", nullable = false)
+    private Station station;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
-    private TripStatus status;
+    @Column(name = "stop_type", nullable = false, length = 20)
+    private StopType stopType;
+
+    @Column(name = "stop_time", nullable = false)
+    private Instant stopTime;
+
+    @Column(name = "address_detail")
+    private String addressDetail;
+
+    @Column(name = "order_index", nullable = false)
+    private Integer orderIndex;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -72,52 +71,52 @@ public class Trip {
         this.id = id;
     }
 
-    public Route getRoute() {
-        return route;
+    public Trip getTrip() {
+        return trip;
     }
 
-    public void setRoute(Route route) {
-        this.route = route;
+    public void setTrip(Trip trip) {
+        this.trip = trip;
     }
 
-    public Bus getBus() {
-        return bus;
+    public Station getStation() {
+        return station;
     }
 
-    public void setBus(Bus bus) {
-        this.bus = bus;
+    public void setStation(Station station) {
+        this.station = station;
     }
 
-    public Instant getDepartureTime() {
-        return departureTime;
+    public StopType getStopType() {
+        return stopType;
     }
 
-    public void setDepartureTime(Instant departureTime) {
-        this.departureTime = departureTime;
+    public void setStopType(StopType stopType) {
+        this.stopType = stopType;
     }
 
-    public Instant getArrivalTime() {
-        return arrivalTime;
+    public Instant getStopTime() {
+        return stopTime;
     }
 
-    public void setArrivalTime(Instant arrivalTime) {
-        this.arrivalTime = arrivalTime;
+    public void setStopTime(Instant stopTime) {
+        this.stopTime = stopTime;
     }
 
-    public BigDecimal getActualPrice() {
-        return actualPrice;
+    public String getAddressDetail() {
+        return addressDetail;
     }
 
-    public void setActualPrice(BigDecimal actualPrice) {
-        this.actualPrice = actualPrice;
+    public void setAddressDetail(String addressDetail) {
+        this.addressDetail = addressDetail;
     }
 
-    public TripStatus getStatus() {
-        return status;
+    public Integer getOrderIndex() {
+        return orderIndex;
     }
 
-    public void setStatus(TripStatus status) {
-        this.status = status;
+    public void setOrderIndex(Integer orderIndex) {
+        this.orderIndex = orderIndex;
     }
 
     public Instant getCreatedAt() {

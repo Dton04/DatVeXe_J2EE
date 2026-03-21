@@ -1,11 +1,10 @@
 package com.example.j2ee16.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public class TripRequest {
     @NotNull(message = "Route ID is required")
@@ -18,8 +17,7 @@ public class TripRequest {
 
     @NotNull(message = "Departure time is required")
     @JsonProperty("departure_time")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime departureTime;
+    private Instant departureTime;
 
     @NotNull(message = "Price modifier is required")
     @JsonProperty("price_modifier")
@@ -41,11 +39,11 @@ public class TripRequest {
         this.busId = busId;
     }
 
-    public LocalDateTime getDepartureTime() {
+    public Instant getDepartureTime() {
         return departureTime;
     }
 
-    public void setDepartureTime(LocalDateTime departureTime) {
+    public void setDepartureTime(Instant departureTime) {
         this.departureTime = departureTime;
     }
 

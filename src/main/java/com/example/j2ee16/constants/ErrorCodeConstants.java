@@ -11,6 +11,7 @@ public final class ErrorCodeConstants {
     public static final String USER_LOCKED = "USER_LOCKED";
     public static final String INVALID_REFRESH_TOKEN = "INVALID_REFRESH_TOKEN";
     public static final String USER_NOT_FOUND = "USER_NOT_FOUND";
+    public static final String RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND";
     public static final String INVALID_OLD_PASSWORD = "INVALID_OLD_PASSWORD";
 
     private ErrorCodeConstants() {

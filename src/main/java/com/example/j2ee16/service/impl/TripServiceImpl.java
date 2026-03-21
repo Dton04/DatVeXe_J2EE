@@ -16,53 +16,55 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+
 @Service
 public class TripServiceImpl implements TripService {
-        private final TripRepository tripRepository;
-        private final RouteRepository routeRepository;
-        private final BusRepository busRepository;
+    private final TripRepository tripRepository;
+    private final RouteRepository routeRepository;
+    private final BusRepository busRepository;
 
-        public TripServiceImpl(TripRepository tripRepository, RouteRepository routeRepository,
-                        BusRepository busRepository) {
-                this.tripRepository = tripRepository;
-                this.routeRepository = routeRepository;
-                this.busRepository = busRepository;
-        }
+    public TripServiceImpl(TripRepository tripRepository, RouteRepository routeRepository,
+                    BusRepository busRepository) {
+            this.tripRepository = tripRepository;
+            this.routeRepository = routeRepository;
+            this.busRepository = busRepository;
+    }
 
-        @Override
-        @Transactional
-        public TripResponse createTrip(TripRequest request) {
-                Route route = routeRepository.findById(request.getRouteId())
-                                .orElseThrow(() -> new ApiException(
-                                                ErrorCodeConstants.INTERNAL_SERVER_ERROR,
-                                                HttpStatus.NOT_FOUND,
-                                                "Route not found"));
+    @Override
+    @Transactional
+    public TripResponse createTrip(TripRequest request) {
+            Route route = routeRepository.findById(request.getRouteId())
+                            .orElseThrow(() -> new ApiException(
+                                            ErrorCodeConstants.RESOURCE_NOT_FOUND,
+                                            HttpStatus.NOT_FOUND,
+                                            "Route not found"));
 
-                Bus bus = busRepository.findById(request.getBusId())
-                                .orElseThrow(() -> new ApiException(
-                                                ErrorCodeConstants.INTERNAL_SERVER_ERROR,
-                                                HttpStatus.NOT_FOUND,
-                                                "Bus not found"));
+            Bus bus = busRepository.findById(request.getBusId())
+                            .orElseThrow(() -> new ApiException(
+                                            ErrorCodeConstants.RESOURCE_NOT_FOUND,
+                                            HttpStatus.NOT_FOUND,
+                                            "Bus not found"));
 
-                Trip trip = new Trip();
-                trip.setRoute(route);
-                trip.setBus(bus);
-                trip.setDepartureTime(request.getDepartureTime());
-                trip.setActualPrice(request.getPriceModifier());
-                trip.setStatus(TripStatus.SCHEDULED);
+            Trip trip = new Trip();
+            trip.setRoute(route);
+            trip.setBus(bus);
+            trip.setDepartureTime(request.getDepartureTime());
+            trip.setActualPrice(request.getPriceModifier());
+            trip.setStatus(TripStatus.SCHEDULED);
 
-                // Calculate arrival time if estimated duration is available
-                if (route.getEstimatedDuration() != null) {
-                        trip.setArrivalTime(request.getDepartureTime().plusMinutes(route.getEstimatedDuration()));
-                }
+            // Calculate arrival time if estimated duration is available
+            if (route.getEstimatedDuration() != null) {
+                    trip.setArrivalTime(request.getDepartureTime().plus(Duration.ofMinutes(route.getEstimatedDuration())));
+            }
 
-                Trip savedTrip = tripRepository.save(trip);
+            Trip savedTrip = tripRepository.save(trip);
 
-                return new TripResponse(
-                                savedTrip.getId(),
-                                route.getOrigin().getName() + " - " + route.getDestination().getName(),
-                                bus.getLicensePlate(),
-                                savedTrip.getDepartureTime(),
-                                savedTrip.getActualPrice());
-        }
+            return new TripResponse(
+                            savedTrip.getId(),
+                            route.getOrigin().getName() + " - " + route.getDestination().getName(),
+                            bus.getLicensePlate(),
+                            savedTrip.getDepartureTime(),
+                            savedTrip.getActualPrice());
+    }
 }

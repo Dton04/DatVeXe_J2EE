@@ -37,7 +37,7 @@ public class Route {
     @Column(name = "distance_km")
     private Double distanceKm;
 
-    @Column(name = "estimated_duration")
+    @Column(name = "estimated_duration_minutes")
     private Integer estimatedDuration; // in minutes
 
     @Column(name = "created_at", nullable = false)
