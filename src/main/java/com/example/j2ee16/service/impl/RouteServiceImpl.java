@@ -27,6 +27,7 @@ public class RouteServiceImpl implements RouteService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<RouteResponse> getAllRoutes() {
         return routeRepository.findAll().stream()
                 .map(this::mapToResponse)

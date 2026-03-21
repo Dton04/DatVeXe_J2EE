@@ -24,13 +24,15 @@ public class TripStopServiceImpl implements TripStopService {
     private final TripRepository tripRepository;
     private final StationRepository stationRepository;
 
-    public TripStopServiceImpl(TripStopRepository tripStopRepository, TripRepository tripRepository, StationRepository stationRepository) {
+    public TripStopServiceImpl(TripStopRepository tripStopRepository, TripRepository tripRepository,
+            StationRepository stationRepository) {
         this.tripStopRepository = tripStopRepository;
         this.tripRepository = tripRepository;
         this.stationRepository = stationRepository;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<TripStopResponse> getStopsByTrip(Long tripId) {
         if (!tripRepository.existsById(tripId)) {
             throw new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.NOT_FOUND, "Trip not found");
@@ -44,10 +46,12 @@ public class TripStopServiceImpl implements TripStopService {
     @Transactional
     public TripStopResponse addStop(Long tripId, TripStopRequest request) {
         Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.NOT_FOUND, "Trip not found"));
+                .orElseThrow(() -> new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.NOT_FOUND,
+                        "Trip not found"));
 
         Station station = stationRepository.findById(request.getStationId())
-                .orElseThrow(() -> new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.NOT_FOUND, "Station not found"));
+                .orElseThrow(() -> new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.NOT_FOUND,
+                        "Station not found"));
 
         TripStop stop = new TripStop();
         stop.setTrip(trip);
@@ -64,14 +68,17 @@ public class TripStopServiceImpl implements TripStopService {
     @Transactional
     public TripStopResponse updateStop(Long tripId, Long stopId, TripStopRequest request) {
         TripStop stop = tripStopRepository.findById(stopId)
-                .orElseThrow(() -> new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.NOT_FOUND, "Trip stop not found"));
+                .orElseThrow(() -> new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.NOT_FOUND,
+                        "Trip stop not found"));
 
         if (!stop.getTrip().getId().equals(tripId)) {
-            throw new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.BAD_REQUEST, "Stop does not belong to this trip");
+            throw new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.BAD_REQUEST,
+                    "Stop does not belong to this trip");
         }
 
         Station station = stationRepository.findById(request.getStationId())
-                .orElseThrow(() -> new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.NOT_FOUND, "Station not found"));
+                .orElseThrow(() -> new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.NOT_FOUND,
+                        "Station not found"));
 
         stop.setStation(station);
         stop.setStopType(request.getStopType());
@@ -86,10 +93,12 @@ public class TripStopServiceImpl implements TripStopService {
     @Transactional
     public void deleteStop(Long tripId, Long stopId) {
         TripStop stop = tripStopRepository.findById(stopId)
-                .orElseThrow(() -> new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.NOT_FOUND, "Trip stop not found"));
+                .orElseThrow(() -> new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.NOT_FOUND,
+                        "Trip stop not found"));
 
         if (!stop.getTrip().getId().equals(tripId)) {
-            throw new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.BAD_REQUEST, "Stop does not belong to this trip");
+            throw new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.BAD_REQUEST,
+                    "Stop does not belong to this trip");
         }
 
         tripStopRepository.delete(stop);
@@ -103,7 +112,6 @@ public class TripStopServiceImpl implements TripStopService {
                 stop.getStopType(),
                 stop.getStopTime(),
                 stop.getAddressDetail(),
-                stop.getOrderIndex()
-        );
+                stop.getOrderIndex());
     }
 }
