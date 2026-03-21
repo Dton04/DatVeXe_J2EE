@@ -5,14 +5,9 @@ import com.example.j2ee16.dto.request.TripRequest;
 import com.example.j2ee16.dto.response.TripLegResponse;
 import com.example.j2ee16.dto.response.TripResponse;
 import com.example.j2ee16.dto.response.TripSearchResponse;
-import com.example.j2ee16.entity.Bus;
-import com.example.j2ee16.entity.Route;
-import com.example.j2ee16.entity.Trip;
-import com.example.j2ee16.entity.TripStatus;
+import com.example.j2ee16.entity.*;
 import com.example.j2ee16.exception.ApiException;
-import com.example.j2ee16.repository.BusRepository;
-import com.example.j2ee16.repository.RouteRepository;
-import com.example.j2ee16.repository.TripRepository;
+import com.example.j2ee16.repository.*;
 import com.example.j2ee16.service.TripService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -23,21 +18,26 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class TripServiceImpl implements TripService {
     private final TripRepository tripRepository;
     private final RouteRepository routeRepository;
     private final BusRepository busRepository;
+    private final SeatRepository seatRepository;
+    private final TicketRepository ticketRepository;
+    private final SeatHoldRepository seatHoldRepository;
 
     public TripServiceImpl(TripRepository tripRepository, RouteRepository routeRepository,
-                    BusRepository busRepository) {
-            this.tripRepository = tripRepository;
-            this.routeRepository = routeRepository;
-            this.busRepository = busRepository;
+                           BusRepository busRepository, SeatRepository seatRepository,
+                           TicketRepository ticketRepository, SeatHoldRepository seatHoldRepository) {
+        this.tripRepository = tripRepository;
+        this.routeRepository = routeRepository;
+        this.busRepository = busRepository;
+        this.seatRepository = seatRepository;
+        this.ticketRepository = ticketRepository;
+        this.seatHoldRepository = seatHoldRepository;
     }
 
     @Override
@@ -128,6 +128,36 @@ public class TripServiceImpl implements TripService {
         }
 
         return results;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, String> getSeatMap(Long tripId) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Trip not found"));
+
+        List<Seat> busSeats = seatRepository.findByBusId(trip.getBus().getId());
+        List<Ticket> activeTickets = ticketRepository.findByTripIdAndTicketStatus(tripId, TicketStatus.ACTIVE);
+        List<SeatHold> activeHolds = seatHoldRepository.findByTripIdAndHoldStatusAndExpiresAtAfter(tripId, HoldStatus.HOLDING, Instant.now());
+
+        Map<String, String> seatMap = new HashMap<>();
+
+        // 1. Initial status: AVAILABLE
+        for (Seat seat : busSeats) {
+            seatMap.put(seat.getSeatNumber(), "AVAILABLE");
+        }
+
+        // 2. Mark HELD (if it was AVAILABLE)
+        for (SeatHold hold : activeHolds) {
+            seatMap.put(hold.getSeatNumber(), "HELD");
+        }
+
+        // 3. Mark BOOKED (always has priority)
+        for (Ticket ticket : activeTickets) {
+            seatMap.put(ticket.getSeatNumber(), "BOOKED");
+        }
+
+        return seatMap;
     }
 
     private TripLegResponse createLegResponse(Trip trip) {

@@ -4,14 +4,11 @@ import com.example.j2ee16.dto.response.TripSearchResponse;
 import com.example.j2ee16.service.TripService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @CrossOrigin
@@ -33,5 +30,10 @@ public class PublicTripController {
 
         List<TripSearchResponse> results = tripService.searchTrips(originId, destinationId, date, maxLegs, minLayoverMinutes);
         return ResponseEntity.ok(results);
+    }
+
+    @GetMapping("/{id}/seats")
+    public ResponseEntity<Map<String, String>> getSeatMap(@PathVariable("id") Long tripId) {
+        return ResponseEntity.ok(tripService.getSeatMap(tripId));
     }
 }

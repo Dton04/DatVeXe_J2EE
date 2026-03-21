@@ -42,7 +42,7 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/index.html", "/app.js", "/styles.css", "/favicon.ico").permitAll()
                 .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
-                .requestMatchers("/api/v1/stations", "/api/v1/routes", "/api/v1/trips/*/stops", "/api/v1/trips").permitAll()
+                .requestMatchers("/api/v1/stations", "/api/v1/routes", "/api/v1/trips/*/stops", "/api/v1/trips", "/api/v1/trips/*/seats", "/api/v1/bookings", "/api/v1/payments", "/api/v1/payments/callback").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated());
