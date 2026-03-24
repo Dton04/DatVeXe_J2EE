@@ -4,11 +4,13 @@ import com.example.j2ee16.constants.ErrorCodeConstants;
 import com.example.j2ee16.dto.request.BookingLegRequest;
 import com.example.j2ee16.dto.request.BookingRequest;
 import com.example.j2ee16.dto.response.BookingResponse;
+import com.example.j2ee16.dto.response.BookingDetailResponse;
 import com.example.j2ee16.dto.response.MyBookingResponse;
 import com.example.j2ee16.entity.*;
 import com.example.j2ee16.exception.ApiException;
 import com.example.j2ee16.repository.*;
 import com.example.j2ee16.service.BookingService;
+import com.example.j2ee16.constants.PolicyConstants;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 @Service
 public class BookingServiceImpl implements BookingService {
@@ -34,15 +38,19 @@ public class BookingServiceImpl implements BookingService {
     private final SeatHoldRepository seatHoldRepository;
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
+    private final TripStopRepository tripStopRepository;
+    private final PaymentRepository paymentRepository;
 
     public BookingServiceImpl(BookingRepository bookingRepository, TripRepository tripRepository,
             SeatHoldRepository seatHoldRepository, TicketRepository ticketRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository, TripStopRepository tripStopRepository, PaymentRepository paymentRepository) {
         this.bookingRepository = bookingRepository;
         this.tripRepository = tripRepository;
         this.seatHoldRepository = seatHoldRepository;
         this.ticketRepository = ticketRepository;
         this.userRepository = userRepository;
+        this.tripStopRepository = tripStopRepository;
+        this.paymentRepository = paymentRepository;
     }
 
     @Override
@@ -341,6 +349,90 @@ public class BookingServiceImpl implements BookingService {
         responses.sort(isUpcoming ? departureComparator : departureComparator.reversed());
 
         return responses;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BookingDetailResponse getBookingDetail(Long bookingId, String email) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Booking not found"));
+
+        if (booking.getUser() == null || booking.getUser().getEmail() == null || !booking.getUser().getEmail().equals(email)) {
+            throw new ApiException(ErrorCodeConstants.FORBIDDEN, HttpStatus.FORBIDDEN, "Forbidden");
+        }
+
+        List<Ticket> tickets = ticketRepository.findByBookingId(bookingId);
+        if (tickets.isEmpty()) {
+            List<SeatHold> holds = seatHoldRepository.findByBookingId(bookingId);
+            if (holds.isEmpty()) {
+                throw new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "No tickets found");
+            }
+        }
+
+        Trip mainTrip = null;
+        if (!tickets.isEmpty()) {
+            tickets.sort(Comparator.comparing(t -> t.getTrip().getDepartureTime()));
+            mainTrip = tickets.get(0).getTrip();
+        } else {
+            List<SeatHold> holds = seatHoldRepository.findByBookingId(bookingId);
+            holds.sort(Comparator.comparing(h -> h.getTrip().getDepartureTime()));
+            mainTrip = holds.get(0).getTrip();
+        }
+
+        String route = mainTrip.getRoute().getOrigin().getName() + " -> " + mainTrip.getRoute().getDestination().getName();
+        String busPlate = mainTrip.getBus().getLicensePlate();
+        String busType = mainTrip.getBus().getBusType() != null ? mainTrip.getBus().getBusType() : "Standard";
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy").withZone(ZoneId.of("Asia/Ho_Chi_Minh"));
+        String departureStr = fmt.format(mainTrip.getDepartureTime());
+
+        List<TripStop> stops = tripStopRepository.findByTripIdOrderByOrderIndexAsc(mainTrip.getId());
+        String pickupPoint = "N/A";
+        for (TripStop s : stops) {
+            if (s.getStopType() == StopType.PICKUP) {
+                pickupPoint = s.getStation().getName();
+                break;
+            }
+        }
+
+        List<BookingDetailResponse.TicketItem> ticketItems = new ArrayList<>();
+        List<String> seatNumbers = new ArrayList<>();
+        for (Ticket t : tickets) {
+            ticketItems.add(new BookingDetailResponse.TicketItem(t.getSeatNumber(), t.getPassengerName()));
+            seatNumbers.add(t.getSeatNumber());
+        }
+        String seatsJoined = String.join(",", seatNumbers);
+        String qr = booking.getBookingCode() + "|" + seatsJoined + "|" + booking.getBookingStatus().name();
+
+        Payment payment = paymentRepository.findFirstByBookingIdOrderByCreatedAtDesc(bookingId).orElse(null);
+        BookingDetailResponse.PaymentInfo paymentInfo = null;
+        if (payment != null) {
+            paymentInfo = new BookingDetailResponse.PaymentInfo(payment.getPaymentMethod(), booking.getTotalAmount(), payment.getStatus());
+        } else {
+            paymentInfo = new BookingDetailResponse.PaymentInfo("N/A", booking.getTotalAmount(), booking.getPaymentStatus());
+        }
+
+        BookingDetailResponse.BookingInfo bookingInfo = new BookingDetailResponse.BookingInfo(
+                booking.getBookingCode(),
+                booking.getBookingStatus(),
+                booking.getCreatedAt() != null ? booking.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant() : null
+        );
+        BookingDetailResponse.TripInfo tripInfo = new BookingDetailResponse.TripInfo(
+                route,
+                busPlate,
+                busType,
+                departureStr,
+                pickupPoint
+        );
+
+        return new BookingDetailResponse(
+                bookingInfo,
+                tripInfo,
+                ticketItems,
+                paymentInfo,
+                qr,
+                PolicyConstants.ETICKET_POLICIES
+        );
     }
 
     @Override

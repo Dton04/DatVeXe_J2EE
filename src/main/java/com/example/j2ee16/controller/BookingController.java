@@ -2,6 +2,7 @@ package com.example.j2ee16.controller;
 
 import com.example.j2ee16.dto.request.BookingRequest;
 import com.example.j2ee16.dto.response.BookingResponse;
+import com.example.j2ee16.dto.response.BookingDetailResponse;
 import com.example.j2ee16.service.BookingService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,11 @@ public class BookingController {
 
     public BookingController(BookingService bookingService) {
         this.bookingService = bookingService;
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<BookingDetailResponse> getBookingDetail(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(bookingService.getBookingDetail(id, authentication.getName()));
     }
 
     @PostMapping
