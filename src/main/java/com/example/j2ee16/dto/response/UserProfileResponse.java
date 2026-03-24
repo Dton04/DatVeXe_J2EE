@@ -9,11 +9,14 @@ public class UserProfileResponse {
     @JsonProperty("full_name")
     private String fullName;
 
+    private String phone;
+
     private String role;
 
-    public UserProfileResponse(Long userId, String fullName, String role) {
+    public UserProfileResponse(Long userId, String fullName, String phone, String role) {
         this.userId = userId;
         this.fullName = fullName;
+        this.phone = phone;
         this.role = role;
     }
 
@@ -23,6 +26,10 @@ public class UserProfileResponse {
 
     public String getFullName() {
         return fullName;
+    }
+
+    public String getPhone() {
+        return phone;
     }
 
     public String getRole() {

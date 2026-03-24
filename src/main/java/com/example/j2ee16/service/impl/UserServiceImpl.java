@@ -1,6 +1,7 @@
 package com.example.j2ee16.service.impl;
 
 import com.example.j2ee16.constants.ErrorCodeConstants;
+import com.example.j2ee16.dto.request.UpdateUserProfileRequest;
 import com.example.j2ee16.dto.response.UserProfileResponse;
 import com.example.j2ee16.entity.User;
 import com.example.j2ee16.exception.ApiException;
@@ -23,13 +24,35 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ApiException(
                         ErrorCodeConstants.USER_NOT_FOUND,
                         HttpStatus.NOT_FOUND,
-                        "User not found"
-                ));
+                        "User not found"));
 
         if (user.isLocked()) {
             throw new ApiException(ErrorCodeConstants.USER_LOCKED, HttpStatus.FORBIDDEN, "User is locked");
         }
 
-        return new UserProfileResponse(user.getId(), user.getFullName(), user.getRole().name());
+        return new UserProfileResponse(user.getId(), user.getFullName(), user.getPhone(), user.getRole().name());
+    }
+
+    @Override
+    public UserProfileResponse updateProfile(String email, UpdateUserProfileRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ApiException(
+                        ErrorCodeConstants.USER_NOT_FOUND,
+                        HttpStatus.NOT_FOUND,
+                        "User not found"));
+
+        if (user.isLocked()) {
+            throw new ApiException(ErrorCodeConstants.USER_LOCKED, HttpStatus.FORBIDDEN, "User is locked");
+        }
+
+        if (request.getFullName() != null && !request.getFullName().isBlank()) {
+            user.setFullName(request.getFullName());
+        }
+        if (request.getPhone() != null && !request.getPhone().isBlank()) {
+            user.setPhone(request.getPhone());
+        }
+        userRepository.save(user);
+
+        return new UserProfileResponse(user.getId(), user.getFullName(), user.getPhone(), user.getRole().name());
     }
 }

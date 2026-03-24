@@ -1,10 +1,14 @@
 package com.example.j2ee16.controller;
 
+import com.example.j2ee16.dto.request.UpdateUserProfileRequest;
 import com.example.j2ee16.dto.response.UserProfileResponse;
 import com.example.j2ee16.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -22,5 +26,13 @@ public class UserController {
     @GetMapping("/profile")
     public ResponseEntity<UserProfileResponse> getProfile(Authentication authentication) {
         return ResponseEntity.ok(userService.getProfile(authentication.getName()));
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<UserProfileResponse> updateProfile(
+            Authentication authentication,
+            @Valid @RequestBody UpdateUserProfileRequest request
+    ) {
+        return ResponseEntity.ok(userService.updateProfile(authentication.getName(), request));
     }
 }
