@@ -19,17 +19,15 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
-    private final SeatHoldRepository seatHoldRepository;
-    private final TicketRepository ticketRepository;
+    private final com.example.j2ee16.service.BookingService bookingService;
     private final com.example.j2ee16.config.VNPayConfig vnPayConfig;
 
     public PaymentServiceImpl(BookingRepository bookingRepository, PaymentRepository paymentRepository,
-                              SeatHoldRepository seatHoldRepository, TicketRepository ticketRepository,
+                              com.example.j2ee16.service.BookingService bookingService,
                               com.example.j2ee16.config.VNPayConfig vnPayConfig) {
         this.bookingRepository = bookingRepository;
         this.paymentRepository = paymentRepository;
-        this.seatHoldRepository = seatHoldRepository;
-        this.ticketRepository = ticketRepository;
+        this.bookingService = bookingService;
         this.vnPayConfig = vnPayConfig;
     }
 
@@ -153,31 +151,13 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setStatus(PaymentStatus.PAID);
             booking.setPaymentStatus(PaymentStatus.PAID);
             booking.setBookingStatus(BookingStatus.CONFIRMED);
+            bookingRepository.save(booking);
 
-            // Fetch holds and convert to tickets
-            List<SeatHold> holds = seatHoldRepository.findByBookingId(booking.getId());
-            for (SeatHold hold : holds) {
-                hold.setHoldStatus(HoldStatus.CONFIRMED);
-                seatHoldRepository.save(hold);
-
-                Ticket ticket = new Ticket();
-                ticket.setBooking(booking);
-                ticket.setTrip(hold.getTrip());
-                ticket.setSeatNumber(hold.getSeatNumber());
-                ticket.setPassengerName(booking.getCustomerName());
-                ticket.setPhone(booking.getCustomerPhone());
-                ticket.setPrice(hold.getTrip().getActualPrice());
-                ticket.setTicketStatus(TicketStatus.ACTIVE);
-                ticket.setCheckInStatus(CheckInStatus.NOT_YET);
-
-                ticketRepository.save(ticket);
-            }
+            bookingService.completeBooking(booking.getId());
         } else {
             payment.setStatus(PaymentStatus.FAILED);
-            // We don't expire the booking immediately, it stays PENDING_PAYMENT until the cron job expires the hold.
         }
 
         paymentRepository.save(payment);
-        bookingRepository.save(booking);
     }
 }

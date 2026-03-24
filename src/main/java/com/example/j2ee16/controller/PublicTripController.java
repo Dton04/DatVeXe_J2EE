@@ -1,6 +1,8 @@
 package com.example.j2ee16.controller;
 
+import com.example.j2ee16.dto.response.TicketResponse;
 import com.example.j2ee16.dto.response.TripSearchResponse;
+import com.example.j2ee16.service.TicketService;
 import com.example.j2ee16.service.TripService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -15,9 +17,11 @@ import java.util.Map;
 @RequestMapping("/api/v1/trips")
 public class PublicTripController {
     private final TripService tripService;
+    private final TicketService ticketService;
 
-    public PublicTripController(TripService tripService) {
+    public PublicTripController(TripService tripService, TicketService ticketService) {
         this.tripService = tripService;
+        this.ticketService = ticketService;
     }
 
     @GetMapping
@@ -33,7 +37,12 @@ public class PublicTripController {
     }
 
     @GetMapping("/{id}/seats")
-    public ResponseEntity<Map<String, String>> getSeatMap(@PathVariable("id") Long tripId) {
-        return ResponseEntity.ok(tripService.getSeatMap(tripId));
+    public ResponseEntity<Map<String, String>> getSeatMap(@PathVariable Long id) {
+        return ResponseEntity.ok(tripService.getSeatMap(id));
+    }
+
+    @GetMapping("/{id}/passengers")
+    public ResponseEntity<List<TicketResponse>> getPassengers(@PathVariable Long id) {
+        return ResponseEntity.ok(ticketService.getPassengersByTrip(id));
     }
 }

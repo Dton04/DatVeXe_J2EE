@@ -31,4 +31,16 @@ public class BookingController {
         BookingResponse response = bookingService.createBooking(request, username);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/{id}/confirm-cash")
+    public ResponseEntity<String> confirmCashPayment(@PathVariable Long id) {
+        bookingService.confirmCashPayment(id);
+        return ResponseEntity.ok("Cash payment confirmed for booking ID: " + id);
+    }
+
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<String> cancelBooking(@PathVariable Long id) {
+        bookingService.cancelBooking(id);
+        return ResponseEntity.ok("Booking cancelled successfully for ID: " + id);
+    }
 }

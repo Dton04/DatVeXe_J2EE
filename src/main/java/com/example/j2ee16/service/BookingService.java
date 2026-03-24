@@ -5,5 +5,8 @@ import com.example.j2ee16.dto.response.BookingResponse;
 
 public interface BookingService {
     BookingResponse createBooking(BookingRequest request, String username);
+    void confirmCashPayment(Long bookingId);
+    void completeBooking(Long bookingId);
+    void cancelBooking(Long bookingId);
     void cancelExpiredHolds();
 }
