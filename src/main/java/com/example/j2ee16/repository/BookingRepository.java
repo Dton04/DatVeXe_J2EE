@@ -13,4 +13,5 @@ import java.util.Optional;
 public interface BookingRepository extends JpaRepository<Booking, Long> {
     Optional<Booking> findByBookingCode(String bookingCode);
     List<Booking> findByBookingStatusAndHoldExpiresAtBefore(BookingStatus status, Instant time);
+    List<Booking> findByUserEmail(String email);
 }

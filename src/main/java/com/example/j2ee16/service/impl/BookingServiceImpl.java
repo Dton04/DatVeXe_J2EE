@@ -4,6 +4,7 @@ import com.example.j2ee16.constants.ErrorCodeConstants;
 import com.example.j2ee16.dto.request.BookingLegRequest;
 import com.example.j2ee16.dto.request.BookingRequest;
 import com.example.j2ee16.dto.response.BookingResponse;
+import com.example.j2ee16.dto.response.MyBookingResponse;
 import com.example.j2ee16.entity.*;
 import com.example.j2ee16.exception.ApiException;
 import com.example.j2ee16.repository.*;
@@ -16,8 +17,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @Service
 public class BookingServiceImpl implements BookingService {
@@ -72,7 +79,13 @@ public class BookingServiceImpl implements BookingService {
                         "Seat " + leg.getSeatNumber() + " is currently held by someone else for trip " + trip.getId());
             }
 
-            totalAmount = totalAmount.add(trip.getActualPrice());
+            BigDecimal legPrice = trip.getActualPrice() != null ? trip.getActualPrice()
+                    : (trip.getRoute() != null ? trip.getRoute().getBasePrice() : null);
+            if (legPrice == null) {
+                throw new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.CONFLICT,
+                        "Price not configured for trip " + trip.getId());
+            }
+            totalAmount = totalAmount.add(legPrice);
         }
 
         // 3. Create Booking
@@ -117,7 +130,12 @@ public class BookingServiceImpl implements BookingService {
             hold.setHoldStatus(HoldStatus.HOLDING);
             hold.setExpiresAt(savedBooking.getHoldExpiresAt());
 
-            seatHoldRepository.save(hold);
+            try {
+                seatHoldRepository.save(hold);
+            } catch (DataIntegrityViolationException ex) {
+                throw new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.CONFLICT,
+                        "Seat " + leg.getSeatNumber() + " is currently held by someone else for trip " + trip.getId());
+            }
         }
 
         return new BookingResponse(
@@ -222,6 +240,107 @@ public class BookingServiceImpl implements BookingService {
                 ticketRepository.save(ticket);
             }
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MyBookingResponse> getMyBookings(String email, String type) {
+        if (email == null || email.isBlank()) {
+            throw new ApiException(ErrorCodeConstants.UNAUTHORIZED, HttpStatus.UNAUTHORIZED, "Unauthorized");
+        }
+
+        String normalizedType = type == null ? "UPCOMING" : type.trim().toUpperCase(Locale.ROOT);
+        boolean isUpcoming = "UPCOMING".equals(normalizedType);
+        boolean isHistory = "HISTORY".equals(normalizedType);
+        boolean isHolding = "HOLDING".equals(normalizedType);
+        boolean isPendingPayment = "PENDING_PAYMENT".equals(normalizedType);
+        boolean isAll = "ALL".equals(normalizedType);
+        if (!(isUpcoming || isHistory || isHolding || isPendingPayment || isAll)) {
+            throw new ApiException(ErrorCodeConstants.VALIDATION_ERROR, HttpStatus.BAD_REQUEST, "Invalid type");
+        }
+
+        List<Booking> bookings = bookingRepository.findByUserEmail(email);
+        if (bookings.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> bookingIds = bookings.stream().map(Booking::getId).toList();
+        List<Ticket> tickets = ticketRepository.findByBookingIdIn(bookingIds);
+
+        Map<Long, List<Ticket>> ticketsByBookingId = new HashMap<>();
+        for (Ticket ticket : tickets) {
+            if (ticket.getBooking() == null || ticket.getBooking().getId() == null) {
+                continue;
+            }
+            ticketsByBookingId.computeIfAbsent(ticket.getBooking().getId(), ignored -> new ArrayList<>()).add(ticket);
+        }
+
+        Instant now = Instant.now();
+        List<MyBookingResponse> responses = new ArrayList<>();
+
+        for (Booking booking : bookings) {
+            List<Ticket> bookingTickets = ticketsByBookingId.getOrDefault(booking.getId(), List.of());
+
+            String routeName = null;
+            Instant departureTime = null;
+            int seatCount = bookingTickets.size();
+
+            if (!bookingTickets.isEmpty()) {
+                List<Ticket> sortedTickets = new ArrayList<>(bookingTickets);
+                sortedTickets.sort(Comparator.comparing(ticket -> ticket.getTrip().getDepartureTime()));
+
+                Trip firstTrip = sortedTickets.get(0).getTrip();
+                Trip lastTrip = sortedTickets.get(sortedTickets.size() - 1).getTrip();
+
+                departureTime = firstTrip.getDepartureTime();
+                routeName = firstTrip.getRoute().getOrigin().getName() + " - " + lastTrip.getRoute().getDestination().getName();
+            } else {
+                List<SeatHold> holds = seatHoldRepository.findByBookingId(booking.getId());
+                if (!holds.isEmpty()) {
+                    holds.sort(Comparator.comparing(hold -> hold.getTrip().getDepartureTime()));
+                    Trip firstTrip = holds.get(0).getTrip();
+                    Trip lastTrip = holds.get(holds.size() - 1).getTrip();
+                    departureTime = firstTrip.getDepartureTime();
+                    routeName = firstTrip.getRoute().getOrigin().getName() + " - " + lastTrip.getRoute().getDestination().getName();
+                    seatCount = holds.size();
+                }
+            }
+
+            boolean cancelledOrExpired = booking.getBookingStatus() == BookingStatus.CANCELLED
+                    || booking.getBookingStatus() == BookingStatus.EXPIRED;
+
+            boolean timeBasedUpcoming = departureTime != null && departureTime.isAfter(now);
+            boolean timeBasedHistory = departureTime != null && !departureTime.isAfter(now);
+
+            boolean include = (isUpcoming && timeBasedUpcoming && !cancelledOrExpired)
+                    || (isHistory && (cancelledOrExpired || timeBasedHistory))
+                    || (isHolding && booking.getBookingStatus() == BookingStatus.HOLDING)
+                    || (isPendingPayment && booking.getBookingStatus() == BookingStatus.PENDING_PAYMENT)
+                    || (isAll);
+
+            if (!include) {
+                continue;
+            }
+
+            responses.add(new MyBookingResponse(
+                    booking.getId(),
+                    booking.getBookingCode(),
+                    routeName,
+                    departureTime,
+                    booking.getTotalAmount(),
+                    seatCount,
+                    booking.getBookingStatus(),
+                    booking.getPaymentStatus()
+            ));
+        }
+
+        Comparator<MyBookingResponse> departureComparator = Comparator.comparing(
+                MyBookingResponse::getDepartureTime,
+                Comparator.nullsLast(Comparator.naturalOrder())
+        );
+        responses.sort(isUpcoming ? departureComparator : departureComparator.reversed());
+
+        return responses;
     }
 
     @Override

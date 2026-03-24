@@ -11,4 +11,6 @@ import java.util.List;
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
     List<Ticket> findByTripIdAndTicketStatus(Long tripId, TicketStatus status);
     List<Ticket> findByTripId(Long tripId);
+    List<Ticket> findByBookingId(Long bookingId);
+    List<Ticket> findByBookingIdIn(List<Long> bookingIds);
 }
