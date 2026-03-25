@@ -5,4 +5,5 @@ import com.example.j2ee16.dto.response.BusResponse;
 
 public interface BusService {
     BusResponse createBus(BusRequest request);
+    void generateSeatsForBus(Long busId);
 }

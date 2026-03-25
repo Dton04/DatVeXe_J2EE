@@ -161,13 +161,18 @@ public class TripServiceImpl implements TripService {
     }
 
     private TripLegResponse createLegResponse(Trip trip) {
+        long bookedCount = ticketRepository.countByTripIdAndTicketStatus(trip.getId(), TicketStatus.ACTIVE);
+        long heldCount = seatHoldRepository.countByTripIdAndHoldStatusAndExpiresAtAfter(trip.getId(), HoldStatus.HOLDING, Instant.now());
+        int availableSeats = trip.getBus().getTotalSeats() - (int) bookedCount - (int) heldCount;
+
         return new TripLegResponse(
                 trip.getId(),
                 trip.getRoute().getOrigin().getName(),
                 trip.getRoute().getDestination().getName(),
                 trip.getDepartureTime(),
                 trip.getArrivalTime(),
-                trip.getBus().getBusType() != null ? trip.getBus().getBusType() : "Standard"
+                trip.getBus().getBusType() != null ? trip.getBus().getBusType() : "Standard",
+                availableSeats
         );
     }
 }

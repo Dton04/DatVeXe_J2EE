@@ -17,16 +17,20 @@ public class TripLegResponse {
     @JsonProperty("bus_type")
     private String busType;
 
+    @JsonProperty("available_seats")
+    private Integer availableSeats;
+
     public TripLegResponse() {
     }
 
-    public TripLegResponse(Long tripId, String origin, String destination, Instant departure, Instant arrival, String busType) {
+    public TripLegResponse(Long tripId, String origin, String destination, Instant departure, Instant arrival, String busType, Integer availableSeats) {
         this.tripId = tripId;
         this.origin = origin;
         this.destination = destination;
         this.departure = departure;
         this.arrival = arrival;
         this.busType = busType;
+        this.availableSeats = availableSeats;
     }
 
     public Long getTripId() {
@@ -75,5 +79,13 @@ public class TripLegResponse {
 
     public void setBusType(String busType) {
         this.busType = busType;
+    }
+
+    public Integer getAvailableSeats() {
+        return availableSeats;
+    }
+
+    public void setAvailableSeats(Integer availableSeats) {
+        this.availableSeats = availableSeats;
     }
 }

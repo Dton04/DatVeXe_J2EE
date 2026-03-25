@@ -11,6 +11,7 @@ import java.util.List;
 @Repository
 public interface SeatHoldRepository extends JpaRepository<SeatHold, Long> {
     List<SeatHold> findByTripIdAndHoldStatusAndExpiresAtAfter(Long tripId, HoldStatus status, Instant now);
+    long countByTripIdAndHoldStatusAndExpiresAtAfter(Long tripId, HoldStatus status, Instant now);
 
     List<SeatHold> findByBookingId(Long bookingId);
 }
