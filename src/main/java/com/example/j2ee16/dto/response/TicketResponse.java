@@ -2,9 +2,9 @@ package com.example.j2ee16.dto.response;
 
 import com.example.j2ee16.entity.CheckInStatus;
 import com.example.j2ee16.entity.TicketStatus;
-import lombok.AllArgsConstructor;
+
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
 
 import java.math.BigDecimal;
 

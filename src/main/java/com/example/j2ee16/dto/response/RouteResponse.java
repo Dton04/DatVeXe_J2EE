@@ -1,7 +1,6 @@
 package com.example.j2ee16.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.math.BigDecimal;
 
 public class RouteResponse {
@@ -21,6 +20,22 @@ public class RouteResponse {
 
     @JsonProperty("destination_station")
     private StationResponse destinationStation;
+
+    @JsonProperty("departure")
+    private String departure;
+
+    @JsonProperty("destination")
+    private String destination;
+
+    @JsonProperty("distance")
+    private Double distance;
+
+    @JsonProperty("duration")
+    private Integer duration;
+
+    @JsonProperty("departure_date")
+    private java.time.LocalDate departureDate;
+
 
     public RouteResponse() {
     }
@@ -90,4 +105,48 @@ public class RouteResponse {
     public void setDestinationStation(StationResponse destinationStation) {
         this.destinationStation = destinationStation;
     }
+
+    public String getDeparture() {
+        return departure;
+    }
+
+    public void setDeparture(String departure) {
+        this.departure = departure;
+    }
+
+    public String getDestination() {
+        return destination;
+    }
+
+    public void setDestination(String destination) {
+        this.destination = destination;
+    }
+
+    public Double getDistance() {
+        return distance;
+    }
+
+    public void setDistance(Double distance) {
+        this.distance = distance;
+    }
+
+    public Integer getDuration() {
+        return duration;
+    }
+
+    public void setDuration(Integer duration) {
+        this.duration = duration;
+    }
+
+    public java.time.LocalDate getDepartureDate() {
+        return departureDate;
+    }
+
+    public void setDepartureDate(java.time.LocalDate departureDate) {
+        this.departureDate = departureDate;
+    }
+
+ 
+
+
 }

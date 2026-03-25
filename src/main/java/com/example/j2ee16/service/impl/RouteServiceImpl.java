@@ -9,8 +9,9 @@ import com.example.j2ee16.entity.Station;
 import com.example.j2ee16.exception.ApiException;
 import com.example.j2ee16.repository.RouteRepository;
 import com.example.j2ee16.repository.StationRepository;
+import com.example.j2ee16.repository.TripRepository;
 import com.example.j2ee16.service.RouteService;
-import org.springframework.dao.DataIntegrityViolationException;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,10 +23,12 @@ import java.util.stream.Collectors;
 public class RouteServiceImpl implements RouteService {
     private final RouteRepository routeRepository;
     private final StationRepository stationRepository;
+    private final TripRepository tripRepository;
 
-    public RouteServiceImpl(RouteRepository routeRepository, StationRepository stationRepository) {
+    public RouteServiceImpl(RouteRepository routeRepository, StationRepository stationRepository, TripRepository tripRepository) {
         this.routeRepository = routeRepository;
         this.stationRepository = stationRepository;
+        this.tripRepository = tripRepository;
     }
 
     @Override
@@ -59,8 +62,27 @@ public class RouteServiceImpl implements RouteService {
         route.setBasePrice(request.getBasePrice());
         route.setDistanceKm(request.getDistanceKm());
         route.setEstimatedDuration(request.getEstimatedDuration());
+        route.setDepartureDate(request.getDepartureDate());
 
         return mapToResponse(routeRepository.save(route));
+    }
+
+    @Override
+    @Transactional
+    public void deleteRoute(Long id) {
+        if (!routeRepository.existsById(id)) {
+            throw new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.NOT_FOUND, "Tuyến đường không tồn tại");
+        }
+        
+        if (tripRepository.existsByRouteId(id)) {
+            throw new ApiException(ErrorCodeConstants.VALIDATION_ERROR, HttpStatus.CONFLICT, "Không thể xóa tuyến đường này vì đã có chuyến xe đang hoạt động.");
+        }
+        
+        try {
+            routeRepository.deleteById(id);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new ApiException(ErrorCodeConstants.VALIDATION_ERROR, HttpStatus.CONFLICT, "Không thể xóa tuyến đường này do ràng buộc dữ liệu khác.");
+        }
     }
 
     private RouteResponse mapToResponse(Route route) {
@@ -104,20 +126,5 @@ public class RouteServiceImpl implements RouteService {
         return mapToResponse(routeRepository.save(route));
     }
 
-    @Override
-    @Transactional
-    public void deleteRoute(Long id) {
-        if (!routeRepository.existsById(id)) {
-            throw new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Route not found");
-        }
-        try {
-            routeRepository.deleteById(id);
-        } catch (DataIntegrityViolationException ex) {
-            throw new ApiException(
-                    ErrorCodeConstants.VALIDATION_ERROR,
-                    HttpStatus.CONFLICT,
-                    "Route cannot be deleted because it is being used"
-            );
-        }
-    }
+   
 }

@@ -34,6 +34,9 @@ public class RouteRequest {
     @Positive(message = "Estimated duration must be positive")
     private Integer estimatedDuration; // in minutes
 
+    @JsonProperty("departure_date")
+    private java.time.LocalDate departureDate;
+
     public Long getOriginStationId() {
         return originStationId;
     }
@@ -72,5 +75,13 @@ public class RouteRequest {
 
     public void setEstimatedDuration(Integer estimatedDuration) {
         this.estimatedDuration = estimatedDuration;
+    }
+
+    public java.time.LocalDate getDepartureDate() {
+        return departureDate;
+    }
+
+    public void setDepartureDate(java.time.LocalDate departureDate) {
+        this.departureDate = departureDate;
     }
 }
