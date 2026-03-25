@@ -40,6 +40,9 @@ public class Route {
     @Column(name = "estimated_duration_minutes")
     private Integer estimatedDuration; // in minutes
 
+    @Column(name = "departure_date")
+    private java.time.LocalDate departureDate;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -104,6 +107,14 @@ public class Route {
 
     public void setEstimatedDuration(Integer estimatedDuration) {
         this.estimatedDuration = estimatedDuration;
+    }
+
+    public java.time.LocalDate getDepartureDate() {
+        return departureDate;
+    }
+
+    public void setDepartureDate(java.time.LocalDate departureDate) {
+        this.departureDate = departureDate;
     }
 
     public Instant getCreatedAt() {

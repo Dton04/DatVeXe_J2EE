@@ -34,4 +34,10 @@ public class AdminRouteController {
     public ResponseEntity<RouteResponse> createRoute(@Valid @RequestBody RouteRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(routeService.createRoute(request));
     }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRoute(@org.springframework.web.bind.annotation.PathVariable Long id) {
+        routeService.deleteRoute(id);
+        return ResponseEntity.noContent().build();
+    }
 }

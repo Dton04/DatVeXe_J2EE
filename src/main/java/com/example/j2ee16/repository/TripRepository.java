@@ -18,4 +18,6 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
 
     List<Trip> findByRouteOriginIdAndRouteDestinationIdAndDepartureTimeGreaterThanEqual(
             Long originId, Long destinationId, Instant earliestDeparture);
+
+    boolean existsByRouteId(Long routeId);
 }
