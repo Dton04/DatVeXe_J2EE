@@ -31,4 +31,9 @@ public class PaymentController {
         paymentService.handlePaymentCallback(params);
         return ResponseEntity.ok("Payment processed. Status: " + params.get("vnp_ResponseCode"));
     }
+
+    @GetMapping("/vnpay/callback")
+    public ResponseEntity<String> handleVnPayCallback(@RequestParam Map<String, String> params) {
+        return handleCallback(params);
+    }
 }

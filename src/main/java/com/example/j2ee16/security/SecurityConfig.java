@@ -42,7 +42,7 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/index.html", "/app.js", "/styles.css", "/favicon.ico").permitAll()
                 .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
-                .requestMatchers("/api/v1/stations", "/api/v1/routes", "/api/v1/trips/*/stops", "/api/v1/trips", "/api/v1/trips/*/seats", "/api/v1/bookings", "/api/v1/payments", "/api/v1/payments/callback").permitAll()
+                .requestMatchers("/api/v1/stations", "/api/v1/routes", "/api/v1/trips/*/stops", "/api/v1/trips", "/api/v1/trips/*/seats", "/api/v1/bookings", "/api/v1/payments", "/api/v1/payments/callback", "/api/v1/payments/vnpay/callback", "/api/v1/payments/momo/callback").permitAll()
                 .requestMatchers("/api/v1/bookings/*/confirm-cash").hasAnyRole("STAFF", "ADMIN")
                 .requestMatchers("/api/v1/bookings/*/cancel").authenticated()
                 .requestMatchers("/api/v1/tickets/*/check-in").hasAnyRole("STAFF", "DRIVER", "ADMIN")

@@ -13,6 +13,8 @@ import java.util.Map;
 public interface TripService {
     TripResponse createTrip(TripRequest request);
 
+    List<TripResponse> getAllTrips();
+
     List<TripSearchResponse> searchTrips(Long originId, Long destinationId, LocalDate date, Integer maxLegs,
             Integer minLayoverMinutes);
 

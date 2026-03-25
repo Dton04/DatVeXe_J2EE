@@ -79,6 +79,20 @@ public class TripServiceImpl implements TripService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<TripResponse> getAllTrips() {
+        return tripRepository.findAll().stream()
+                .map(trip -> new TripResponse(
+                        trip.getId(),
+                        trip.getRoute().getOrigin().getName() + " - " + trip.getRoute().getDestination().getName(),
+                        trip.getBus().getLicensePlate(),
+                        trip.getDepartureTime(),
+                        trip.getActualPrice()
+                ))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<TripSearchResponse> searchTrips(Long originId, Long destinationId, LocalDate date, Integer maxLegs, Integer minLayoverMinutes) {
         Instant startOfDay = date.atStartOfDay(ZoneOffset.UTC).toInstant();
         Instant endOfDay = date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();

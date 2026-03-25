@@ -69,6 +69,19 @@ public class BusServiceImpl implements BusService {
         generateSeats(bus);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<BusResponse> getAllBuses() {
+        return busRepository.findAll().stream()
+                .map(bus -> new BusResponse(
+                        bus.getId(),
+                        bus.getLicensePlate(),
+                        bus.getTotalSeats(),
+                        bus.getBusType()
+                ))
+                .toList();
+    }
+
     private void generateSeats(Bus bus) {
         int totalSeats = bus.getTotalSeats();
         int rows = (int) Math.ceil((double) totalSeats / 2);

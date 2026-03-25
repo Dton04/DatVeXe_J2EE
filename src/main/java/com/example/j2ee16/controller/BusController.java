@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
+import java.util.List;
+
 @RestController
 @CrossOrigin
 @RequestMapping("/api/v1/admin/buses")
@@ -17,6 +19,11 @@ public class BusController {
 
     public BusController(BusService busService) {
         this.busService = busService;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<BusResponse>> getAllBuses() {
+        return ResponseEntity.ok(busService.getAllBuses());
     }
 
     @PostMapping

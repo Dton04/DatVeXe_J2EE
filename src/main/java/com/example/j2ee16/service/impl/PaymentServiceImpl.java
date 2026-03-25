@@ -53,7 +53,7 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setTransactionRef(transactionRef);
         payment.setAmount(booking.getTotalAmount());
         payment.setPaymentMethod(request.getPaymentMethod());
-        payment.setStatus(PaymentStatus.UNPAID);
+        payment.setStatus(PaymentStatus.PENDING);
 
         paymentRepository.save(payment);
 
@@ -141,14 +141,14 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = paymentRepository.findByTransactionRef(transactionRef)
                 .orElseThrow(() -> new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Payment transaction not found"));
 
-        if (payment.getStatus() == PaymentStatus.PAID) {
+        if (payment.getStatus() == PaymentStatus.SUCCESS) {
             return; // Already processed
         }
 
         Booking booking = payment.getBooking();
 
         if ("SUCCESS".equalsIgnoreCase(status)) {
-            payment.setStatus(PaymentStatus.PAID);
+            payment.setStatus(PaymentStatus.SUCCESS);
             booking.setPaymentStatus(PaymentStatus.PAID);
             booking.setBookingStatus(BookingStatus.CONFIRMED);
             bookingRepository.save(booking);
