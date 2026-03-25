@@ -204,38 +204,37 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public void cancelBooking(Long bookingId) {
+    public void cancelBooking(Long bookingId, String currentUserEmail) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND,
-                        "Booking not found"));
+                        "Booking not found or access denied"));
+
+        if (booking.getUser() == null
+                || booking.getUser().getEmail() == null
+                || !booking.getUser().getEmail().equalsIgnoreCase(currentUserEmail)) {
+            throw new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND,
+                    "Booking not found or access denied");
+        }
 
         if (booking.getBookingStatus() == BookingStatus.CANCELLED) {
             return;
         }
 
-        // 1. Check regulation: 24h before departure
-        List<SeatHold> holds = seatHoldRepository.findByBookingId(bookingId);
-        Instant earliestDeparture = null;
-        for (SeatHold hold : holds) {
-            Instant depTime = hold.getTrip().getDepartureTime();
-            if (earliestDeparture == null || depTime.isBefore(earliestDeparture)) {
-                earliestDeparture = depTime;
-            }
+        boolean canCancel = booking.getBookingStatus() == BookingStatus.HOLDING
+                || booking.getBookingStatus() == BookingStatus.PENDING_PAYMENT
+                || booking.getPaymentStatus() == PaymentStatus.UNPAID;
+
+        if (!canCancel) {
+            throw new ApiException(ErrorCodeConstants.VALIDATION_ERROR, HttpStatus.BAD_REQUEST,
+                    "Cannot cancel booking in current status");
         }
 
-        if (earliestDeparture != null) {
-            long hoursToDeparture = ChronoUnit.HOURS.between(Instant.now(), earliestDeparture);
-            if (hoursToDeparture < 24) {
-                throw new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.BAD_REQUEST,
-                        "Cannot cancel booking less than 24h before departure.");
-            }
-        }
-
-        // 2. Update Booking Status
+        // Update Booking Status
         booking.setBookingStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
 
-        // 3. Update Tickets/Holds
+        // Update Tickets/Holds (giữ lại logic cũ nếu cần)
+        List<SeatHold> holds = seatHoldRepository.findByBookingId(bookingId);
         for (SeatHold hold : holds) {
             hold.setHoldStatus(HoldStatus.RELEASED);
             seatHoldRepository.save(hold);
