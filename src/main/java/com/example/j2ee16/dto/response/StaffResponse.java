@@ -1,19 +1,22 @@
 package com.example.j2ee16.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class StaffResponse {
     private Long id;
+    private String fullName;
     private String email;
-    @JsonProperty("is_locked")
+    private String phone;
+    private String role;
     private boolean locked;
 
     public StaffResponse() {
     }
 
-    public StaffResponse(Long id, String email, boolean locked) {
+    public StaffResponse(Long id, String fullName, String email, String phone, String role, boolean locked) {
         this.id = id;
+        this.fullName = fullName;
         this.email = email;
+        this.phone = phone;
+        this.role = role;
         this.locked = locked;
     }
 
@@ -25,12 +28,36 @@ public class StaffResponse {
         this.id = id;
     }
 
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
     public String getEmail() {
         return email;
     }
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     public boolean isLocked() {

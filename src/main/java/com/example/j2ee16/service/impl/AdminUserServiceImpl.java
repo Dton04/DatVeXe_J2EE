@@ -43,6 +43,8 @@ public class AdminUserServiceImpl implements AdminUserService {
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setFullName(request.getFullName());
+        user.setPhone(request.getPhone());
         user.setRole(request.getRole());
         user.setLocked(false);
 
@@ -52,15 +54,18 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     @Override
     public List<StaffResponse> getAllStaff() {
-        // Based on the prompt, "nhân viên" usually means STAFF and maybe DRIVER. 
-        // Example shows role STAFF. I'll include both STAFF and DRIVER to be safe, 
-        // or just return all non-ADMIN/non-CUSTOMER users?
-        // Let's filter by STAFF and DRIVER roles.
-        List<UserRole> staffRoles = Arrays.asList(UserRole.STAFF, UserRole.DRIVER);
+        List<UserRole> staffRoles = Arrays.asList(UserRole.CUSTOMER, UserRole.STAFF);
         
         return userRepository.findAll().stream()
                 .filter(user -> staffRoles.contains(user.getRole()))
-                .map(user -> new StaffResponse(user.getId(), user.getEmail(), user.isLocked()))
+                .map(user -> new StaffResponse(
+                        user.getId(),
+                        user.getFullName(),
+                        user.getEmail(),
+                        user.getPhone(),
+                        user.getRole().name(),
+                        user.isLocked()
+                ))
                 .collect(Collectors.toList());
     }
 

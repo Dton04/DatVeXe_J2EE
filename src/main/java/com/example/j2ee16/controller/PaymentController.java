@@ -4,8 +4,12 @@ import com.example.j2ee16.dto.request.PaymentRequest;
 import com.example.j2ee16.dto.response.PaymentResponse;
 import com.example.j2ee16.service.PaymentService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Map;
 
@@ -15,9 +19,11 @@ import java.util.Map;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final String frontendBaseUrl;
 
-    public PaymentController(PaymentService paymentService) {
+    public PaymentController(PaymentService paymentService, @Value("${app.frontend.base-url}") String frontendBaseUrl) {
         this.paymentService = paymentService;
+        this.frontendBaseUrl = frontendBaseUrl;
     }
 
     @PostMapping
@@ -27,13 +33,31 @@ public class PaymentController {
     }
 
     @GetMapping("/callback")
-    public ResponseEntity<String> handleCallback(@RequestParam Map<String, String> params) {
-        paymentService.handlePaymentCallback(params);
-        return ResponseEntity.ok("Payment processed. Status: " + params.get("vnp_ResponseCode"));
+    public RedirectView handleCallback(@RequestParam Map<String, String> params) {
+        String responseCode = params.getOrDefault("vnp_ResponseCode", "");
+        String txnRef = params.getOrDefault("vnp_TxnRef", "");
+
+        String paymentStatus = "00".equals(responseCode) ? "success" : "failed";
+        try {
+            paymentService.handlePaymentCallback(params);
+        } catch (Exception ex) {
+            paymentStatus = "failed";
+        }
+
+        String redirectUrl = UriComponentsBuilder.fromHttpUrl(frontendBaseUrl)
+                .path("/profile/orders")
+                .queryParam("payment", paymentStatus)
+                .queryParam("txnRef", txnRef)
+                .build()
+                .toUriString();
+
+        RedirectView view = new RedirectView(redirectUrl);
+        view.setStatusCode(HttpStatus.FOUND);
+        return view;
     }
 
     @GetMapping("/vnpay/callback")
-    public ResponseEntity<String> handleVnPayCallback(@RequestParam Map<String, String> params) {
+    public RedirectView handleVnPayCallback(@RequestParam Map<String, String> params) {
         return handleCallback(params);
     }
 }

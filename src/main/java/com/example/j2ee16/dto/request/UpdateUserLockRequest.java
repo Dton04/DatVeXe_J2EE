@@ -1,11 +1,11 @@
 package com.example.j2ee16.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotNull;
 
 public class UpdateUserLockRequest {
-    @NotNull(message = "is_locked status is required")
-    @JsonProperty("is_locked")
+    @NotNull(message = "locked status is required")
+    @JsonAlias("is_locked")
     private Boolean locked;
 
     public Boolean getLocked() {

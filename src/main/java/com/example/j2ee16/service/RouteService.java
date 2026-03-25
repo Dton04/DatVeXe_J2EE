@@ -8,4 +8,6 @@ import java.util.List;
 public interface RouteService {
     List<RouteResponse> getAllRoutes();
     RouteResponse createRoute(RouteRequest request);
+    RouteResponse updateRoute(Long id, RouteRequest request);
+    void deleteRoute(Long id);
 }
