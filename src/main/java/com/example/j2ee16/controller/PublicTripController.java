@@ -26,13 +26,13 @@ public class PublicTripController {
 
     @GetMapping
     public ResponseEntity<List<TripSearchResponse>> searchTrips(
-            @RequestParam("origin_id") Long originId,
-            @RequestParam("destination_id") Long destinationId,
+            @RequestParam("origin_province_id") Long originProvinceId,
+            @RequestParam("destination_province_id") Long destinationProvinceId,
             @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(value = "max_legs", defaultValue = "2") Integer maxLegs,
-            @RequestParam(value = "min_layover_minutes", defaultValue = "30") Integer minLayoverMinutes) {
+            @RequestParam(value = "min_layover_minutes", defaultValue = "45") Integer minLayoverMinutes) {
 
-        List<TripSearchResponse> results = tripService.searchTrips(originId, destinationId, date, maxLegs, minLayoverMinutes);
+        List<TripSearchResponse> results = tripService.searchTrips(originProvinceId, destinationProvinceId, date, maxLegs, minLayoverMinutes);
         return ResponseEntity.ok(results);
     }
 

@@ -8,9 +8,8 @@ public class StationRequest {
     @Size(max = 120)
     private String name;
 
-    @NotBlank(message = "City is required")
-    @Size(max = 100)
-    private String city;
+    @jakarta.validation.constraints.NotNull(message = "Province ID is required")
+    private Long provinceId;
 
     @Size(max = 255)
     private String address;
@@ -23,12 +22,12 @@ public class StationRequest {
         this.name = name;
     }
 
-    public String getCity() {
-        return city;
+    public Long getProvinceId() {
+        return provinceId;
     }
 
-    public void setCity(String city) {
-        this.city = city;
+    public void setProvinceId(Long provinceId) {
+        this.provinceId = provinceId;
     }
 
     public String getAddress() {

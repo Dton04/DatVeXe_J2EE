@@ -108,7 +108,7 @@ public class TripStopServiceImpl implements TripStopService {
         return new TripStopResponse(
                 stop.getId(),
                 stop.getStation().getName(),
-                stop.getStation().getCity(),
+                stop.getStation().getProvince().getName(),
                 stop.getStopType(),
                 stop.getStopTime(),
                 stop.getAddressDetail(),

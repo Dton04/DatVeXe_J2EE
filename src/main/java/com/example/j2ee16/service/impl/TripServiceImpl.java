@@ -59,7 +59,12 @@ public class TripServiceImpl implements TripService {
             trip.setRoute(route);
             trip.setBus(bus);
             trip.setDepartureTime(request.getDepartureTime());
-            trip.setActualPrice(request.getPriceModifier());
+
+            // FIX: actual_price = base_price * price_modifier (not the modifier itself)
+            BigDecimal basePrice = route.getBasePrice() != null ? route.getBasePrice() : BigDecimal.ZERO;
+            BigDecimal modifier = request.getPriceModifier() != null ? request.getPriceModifier() : BigDecimal.ONE;
+            trip.setActualPrice(basePrice.multiply(modifier));
+
             trip.setStatus(TripStatus.SCHEDULED);
 
             // Calculate arrival time if estimated duration is available
@@ -92,55 +97,104 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
+    @Transactional
+    public TripResponse updateTrip(Long id, TripRequest request) {
+        Trip trip = tripRepository.findById(id)
+                .orElseThrow(() -> new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Trip not found"));
+
+        if (request.getRouteId() != null) {
+            Route route = routeRepository.findById(request.getRouteId())
+                    .orElseThrow(() -> new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Route not found"));
+            trip.setRoute(route);
+
+            // Recalculate price with new route's base price
+            BigDecimal basePrice = route.getBasePrice() != null ? route.getBasePrice() : BigDecimal.ZERO;
+            BigDecimal modifier = request.getPriceModifier() != null ? request.getPriceModifier() : BigDecimal.ONE;
+            trip.setActualPrice(basePrice.multiply(modifier));
+
+            if (route.getEstimatedDuration() != null && trip.getDepartureTime() != null) {
+                trip.setArrivalTime(trip.getDepartureTime().plus(Duration.ofMinutes(route.getEstimatedDuration())));
+            }
+        } else if (request.getPriceModifier() != null && trip.getRoute() != null) {
+            BigDecimal basePrice = trip.getRoute().getBasePrice() != null ? trip.getRoute().getBasePrice() : BigDecimal.ZERO;
+            trip.setActualPrice(basePrice.multiply(request.getPriceModifier()));
+        }
+
+        if (request.getBusId() != null) {
+            Bus bus = busRepository.findById(request.getBusId())
+                    .orElseThrow(() -> new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Bus not found"));
+            trip.setBus(bus);
+        }
+
+        if (request.getDepartureTime() != null) {
+            trip.setDepartureTime(request.getDepartureTime());
+            if (trip.getRoute().getEstimatedDuration() != null) {
+                trip.setArrivalTime(request.getDepartureTime().plus(Duration.ofMinutes(trip.getRoute().getEstimatedDuration())));
+            }
+        }
+
+        Trip saved = tripRepository.save(trip);
+        return new TripResponse(
+                saved.getId(),
+                saved.getRoute().getOrigin().getName() + " - " + saved.getRoute().getDestination().getName(),
+                saved.getBus().getLicensePlate(),
+                saved.getDepartureTime(),
+                saved.getActualPrice());
+    }
+
+    @Override
     @Transactional(readOnly = true)
-    public List<TripSearchResponse> searchTrips(Long originId, Long destinationId, LocalDate date, Integer maxLegs, Integer minLayoverMinutes) {
+    public List<TripSearchResponse> searchTrips(Long originProvinceId, Long destinationProvinceId, LocalDate date, Integer maxLegs, Integer minLayoverMinutes) {
         Instant startOfDay = date.atStartOfDay(ZoneOffset.UTC).toInstant();
         Instant endOfDay = date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
 
         List<TripSearchResponse> results = new ArrayList<>();
 
-        // 1. Direct Trips
-        List<Trip> directTrips = tripRepository.findByRouteOriginIdAndRouteDestinationIdAndDepartureTimeBetween(
-                originId, destinationId, startOfDay, endOfDay);
-        
-        for (Trip trip : directTrips) {
-            TripLegResponse leg = createLegResponse(trip);
-            results.add(new TripSearchResponse("DIRECT", trip.getActualPrice(), null, Arrays.asList(leg)));
-        }
+        // Quét tất cả chuyến xuất phát từ Tỉnh A
+        List<Trip> allTripsFromA = tripRepository.findByOriginProvinceAndDepartureTimeBetween(
+                originProvinceId, startOfDay, endOfDay);
 
-        // 2. Connecting Trips (if maxLegs >= 2)
-        if (maxLegs != null && maxLegs >= 2) {
-            List<Trip> firstLegs = tripRepository.findByRouteOriginIdAndRouteDestinationIdNotAndDepartureTimeBetween(
-                    originId, destinationId, startOfDay, endOfDay);
+        int layover = minLayoverMinutes != null ? minLayoverMinutes : 45;
 
-            int layover = minLayoverMinutes != null ? minLayoverMinutes : 30;
+        for (Trip trip1 : allTripsFromA) {
+            Long currentProvId = trip1.getRoute().getDestination().getProvince().getId();
+            
+            // TRƯỜNG HỢP 1: CHUYẾN ĐI THẲNG (Điểm đến của Chuyến 1 trùng với Tỉnh đích B)
+            if (currentProvId.equals(destinationProvinceId)) {
+                TripLegResponse leg = createLegResponse(trip1);
+                results.add(new TripSearchResponse("DIRECT", trip1.getActualPrice(), null, false, Arrays.asList(leg)));
+                continue;
+            }
 
-            for (Trip firstLeg : firstLegs) {
-                if (firstLeg.getArrivalTime() == null) continue;
+            // TRƯỜNG HỢP 2: TÌM CHUYẾN NỐI (Tại Tỉnh trung chuyển)
+            if (maxLegs != null && maxLegs >= 2) {
+                if (trip1.getArrivalTime() == null) continue;
 
-                Instant minEarliestDeparture = firstLeg.getArrivalTime().plus(Duration.ofMinutes(layover));
-                
-                List<Trip> secondLegs = tripRepository.findByRouteOriginIdAndRouteDestinationIdAndDepartureTimeGreaterThanEqual(
-                        firstLeg.getRoute().getDestination().getId(), destinationId, minEarliestDeparture);
+                // Layover Constraint: min 45m (or provided) to max 6 hours
+                Instant minDepartureParams = trip1.getArrivalTime().plus(Duration.ofMinutes(layover));
+                Instant maxDepartureParams = trip1.getArrivalTime().plus(Duration.ofHours(6));
 
-                for (Trip secondLeg : secondLegs) {
-                    // Limit connecting trips to within 24 hours of first leg arrival to remain relevant
-                    if(secondLeg.getDepartureTime().isAfter(firstLeg.getArrivalTime().plus(Duration.ofHours(24)))) {
-                        continue;
-                    }
+                List<Trip> possibleTrip2s = tripRepository.findByOriginProvinceAndDestinationProvinceAndDepartureTimeBetween(
+                        currentProvId, destinationProvinceId, minDepartureParams, maxDepartureParams);
 
-                    TripLegResponse leg1 = createLegResponse(firstLeg);
-                    TripLegResponse leg2 = createLegResponse(secondLeg);
+                for (Trip trip2 : possibleTrip2s) {
+                    boolean requiresStationTransfer = !trip1.getRoute().getDestination().getId()
+                            .equals(trip2.getRoute().getOrigin().getId());
 
-                    BigDecimal totalPrice = firstLeg.getActualPrice().add(secondLeg.getActualPrice());
-                    long layoverDuration = Duration.between(firstLeg.getArrivalTime(), secondLeg.getDepartureTime()).toMinutes();
+                    long layoverDuration = Duration.between(trip1.getArrivalTime(), trip2.getDepartureTime()).toMinutes();
                     String layoverStr = layoverDuration + " mins";
 
-                    results.add(new TripSearchResponse("CONNECTING", totalPrice, layoverStr, Arrays.asList(leg1, leg2)));
+                    BigDecimal totalPrice = trip1.getActualPrice().add(trip2.getActualPrice());
+
+                    TripLegResponse leg1 = createLegResponse(trip1);
+                    TripLegResponse leg2 = createLegResponse(trip2);
+
+                    results.add(new TripSearchResponse("CONNECTING", totalPrice, layoverStr, requiresStationTransfer, Arrays.asList(leg1, leg2)));
                 }
             }
         }
 
+        results.sort(Comparator.comparing(TripSearchResponse::getTotalPrice));
         return results;
     }
 

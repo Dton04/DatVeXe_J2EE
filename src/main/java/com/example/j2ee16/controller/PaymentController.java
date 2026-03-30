@@ -45,8 +45,8 @@ public class PaymentController {
         }
 
         String redirectUrl = UriComponentsBuilder.fromHttpUrl(frontendBaseUrl)
-                .path("/profile/orders")
-                .queryParam("payment", paymentStatus)
+                .path("/payment/vnpay/return")
+                .queryParam("status", paymentStatus)
                 .queryParam("txnRef", txnRef)
                 .build()
                 .toUriString();

@@ -17,9 +17,11 @@ import java.util.stream.Collectors;
 @Service
 public class StationServiceImpl implements StationService {
     private final StationRepository stationRepository;
+    private final com.example.j2ee16.repository.ProvinceRepository provinceRepository;
 
-    public StationServiceImpl(StationRepository stationRepository) {
+    public StationServiceImpl(StationRepository stationRepository, com.example.j2ee16.repository.ProvinceRepository provinceRepository) {
         this.stationRepository = stationRepository;
+        this.provinceRepository = provinceRepository;
     }
 
     @Override
@@ -34,7 +36,17 @@ public class StationServiceImpl implements StationService {
     public StationResponse createStation(StationRequest request) {
         Station station = new Station();
         station.setName(request.getName());
-        station.setCity(request.getCity());
+        
+        if (request.getProvinceId() != null) {
+            com.example.j2ee16.entity.Province province = provinceRepository.findById(request.getProvinceId())
+                    .orElseThrow(() -> new ApiException(
+                            ErrorCodeConstants.RESOURCE_NOT_FOUND,
+                            HttpStatus.NOT_FOUND,
+                            "Province not found"
+                    ));
+            station.setProvince(province);
+        }
+        
         station.setAddress(request.getAddress());
 
         return mapToResponse(stationRepository.save(station));
@@ -51,7 +63,17 @@ public class StationServiceImpl implements StationService {
                 ));
 
         station.setName(request.getName());
-        station.setCity(request.getCity());
+        
+        if (request.getProvinceId() != null) {
+            com.example.j2ee16.entity.Province province = provinceRepository.findById(request.getProvinceId())
+                    .orElseThrow(() -> new ApiException(
+                            ErrorCodeConstants.RESOURCE_NOT_FOUND,
+                            HttpStatus.NOT_FOUND,
+                            "Province not found"
+                    ));
+            station.setProvince(province);
+        }
+        
         station.setAddress(request.getAddress());
 
         return mapToResponse(stationRepository.save(station));
@@ -71,10 +93,14 @@ public class StationServiceImpl implements StationService {
     }
 
     private StationResponse mapToResponse(Station station) {
+        Long provinceId = station.getProvince() != null ? station.getProvince().getId() : null;
+        String provinceName = station.getProvince() != null ? station.getProvince().getName() : null;
+        
         return new StationResponse(
                 station.getId(),
                 station.getName(),
-                station.getCity(),
+                provinceId,
+                provinceName,
                 station.getAddress()
         );
     }

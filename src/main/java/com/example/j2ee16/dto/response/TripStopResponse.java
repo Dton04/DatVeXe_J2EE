@@ -9,7 +9,8 @@ public class TripStopResponse {
     private Long id;
     @JsonProperty("station_name")
     private String stationName;
-    private String city;
+    @JsonProperty("province_name")
+    private String provinceName;
     @JsonProperty("stop_type")
     private StopType stopType;
     @JsonProperty("stop_time")
@@ -22,10 +23,10 @@ public class TripStopResponse {
     public TripStopResponse() {
     }
 
-    public TripStopResponse(Long id, String stationName, String city, StopType stopType, Instant stopTime, String addressDetail, Integer orderIndex) {
+    public TripStopResponse(Long id, String stationName, String provinceName, StopType stopType, Instant stopTime, String addressDetail, Integer orderIndex) {
         this.id = id;
         this.stationName = stationName;
-        this.city = city;
+        this.provinceName = provinceName;
         this.stopType = stopType;
         this.stopTime = stopTime;
         this.addressDetail = addressDetail;
@@ -48,12 +49,12 @@ public class TripStopResponse {
         this.stationName = stationName;
     }
 
-    public String getCity() {
-        return city;
+    public String getProvinceName() {
+        return provinceName;
     }
 
-    public void setCity(String city) {
-        this.city = city;
+    public void setProvinceName(String provinceName) {
+        this.provinceName = provinceName;
     }
 
     public StopType getStopType() {

@@ -13,9 +13,11 @@ import java.util.Map;
 public interface TripService {
     TripResponse createTrip(TripRequest request);
 
+    TripResponse updateTrip(Long id, TripRequest request);
+
     List<TripResponse> getAllTrips();
 
-    List<TripSearchResponse> searchTrips(Long originId, Long destinationId, LocalDate date, Integer maxLegs,
+    List<TripSearchResponse> searchTrips(Long originProvinceId, Long destinationProvinceId, LocalDate date, Integer maxLegs,
             Integer minLayoverMinutes);
 
     Map<String, String> getSeatMap(Long tripId);

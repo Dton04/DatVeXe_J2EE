@@ -86,14 +86,19 @@ public class RouteServiceImpl implements RouteService {
     }
 
     private RouteResponse mapToResponse(Route route) {
+        Long originProvId = route.getOrigin().getProvince() != null ? route.getOrigin().getProvince().getId() : null;
+        String originProvName = route.getOrigin().getProvince() != null ? route.getOrigin().getProvince().getName() : null;
+        Long destProvId = route.getDestination().getProvince() != null ? route.getDestination().getProvince().getId() : null;
+        String destProvName = route.getDestination().getProvince() != null ? route.getDestination().getProvince().getName() : null;
+        
         return new RouteResponse(
                 route.getId(),
                 route.getOrigin().getName() + " - " + route.getDestination().getName(),
                 route.getBasePrice(),
                 route.getDistanceKm(),
                 route.getEstimatedDuration(),
-                new StationResponse(route.getOrigin().getId(), route.getOrigin().getName(), route.getOrigin().getCity(), route.getOrigin().getAddress()),
-                new StationResponse(route.getDestination().getId(), route.getDestination().getName(), route.getDestination().getCity(), route.getDestination().getAddress())
+                new StationResponse(route.getOrigin().getId(), route.getOrigin().getName(), originProvId, originProvName, route.getOrigin().getAddress()),
+                new StationResponse(route.getDestination().getId(), route.getDestination().getName(), destProvId, destProvName, route.getDestination().getAddress())
         );
     }
 

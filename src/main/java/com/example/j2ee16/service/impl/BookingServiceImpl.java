@@ -62,13 +62,34 @@ public class BookingServiceImpl implements BookingService {
             user = userRepository.findByEmail(username).orElse(null);
         }
 
-        // 2. Validate availability and calculate total price
+        // 2. Extract and Lock Trips to prevent Deadlock (sorted by ID)
+        List<Long> tripIds = request.getLegs().stream()
+                .map(BookingLegRequest::getTripId)
+                .distinct()
+                .sorted()
+                .toList();
+
+        List<Trip> trips = tripRepository.findByIdInWithLock(tripIds);
+        if (trips.size() != tripIds.size()) {
+            throw new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, 
+                    "One or more trips not found");
+        }
+
+        Map<Long, Trip> tripMap = new HashMap<>();
+        for (Trip trip : trips) {
+            tripMap.put(trip.getId(), trip);
+        }
+
+        // 3. Validate availability and calculate total price
         BigDecimal totalAmount = BigDecimal.ZERO;
+        Instant now = Instant.now();
 
         for (BookingLegRequest leg : request.getLegs()) {
-            Trip trip = tripRepository.findById(leg.getTripId())
-                    .orElseThrow(() -> new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND,
-                            "Trip not found: " + leg.getTripId()));
+            Trip trip = tripMap.get(leg.getTripId());
+            if (trip == null) {
+                throw new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND,
+                        "Trip not found: " + leg.getTripId());
+            }
 
             // Check if seat is currently BOOKED
             List<Ticket> tickets = ticketRepository.findByTripIdAndTicketStatus(trip.getId(), TicketStatus.ACTIVE);
@@ -80,7 +101,7 @@ public class BookingServiceImpl implements BookingService {
 
             // Check if seat is currently HELD
             List<SeatHold> holds = seatHoldRepository.findByTripIdAndHoldStatusAndExpiresAtAfter(trip.getId(),
-                    HoldStatus.HOLDING, Instant.now());
+                    HoldStatus.HOLDING, now);
             boolean isHeld = holds.stream().anyMatch(h -> h.getSeatNumber().equals(leg.getSeatNumber()));
             if (isHeld) {
                 throw new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.CONFLICT,
@@ -96,7 +117,7 @@ public class BookingServiceImpl implements BookingService {
             totalAmount = totalAmount.add(legPrice);
         }
 
-        // 3. Create Booking
+        // 4. Create Booking
         Booking booking = new Booking();
         booking.setBookingCode(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         booking.setUser(user);
@@ -105,31 +126,13 @@ public class BookingServiceImpl implements BookingService {
         booking.setTotalAmount(totalAmount);
         booking.setBookingStatus(BookingStatus.HOLDING);
         booking.setPaymentStatus(PaymentStatus.UNPAID);
-        booking.setHoldExpiresAt(Instant.now().plus(10, ChronoUnit.MINUTES));
-
-        // Wait: The plan says passenger details belong to Ticket. Where do we store
-        // them before payment?
-        // We can create the Tickets upfront in status PENDING and then change to ACTIVE
-        // upon payment.
-        // Or store it somewhere else. Let's create Tickets as part of the booking with
-        // status CANCELLED/PENDING and update them later.
-        // Wait, the plan didn't define a PENDING status for Ticket, only "ACTIVE",
-        // "CANCELLED".
-        // Let's create SeatHolds right now to hold the seat. The passenger details will
-        // be saved when creating the Ticket.
-        // Actually we need to know the passenger name and phone for the ticket.
-        // We can just add them to the Booking entity now or the SeatHold.
-        // To simplify, let's create the Tickets with a status, but TicketStatus is
-        // ACTIVE, CANCELLED.
-        // We will just create SeatHolds, and we need passenger info. Since
-        // BookingRequest has customerName, customerPhone, we will use that for ALL
-        // tickets later.
+        booking.setHoldExpiresAt(now.plus(10, ChronoUnit.MINUTES));
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        // 4. Create SeatHolds
+        // 5. Create SeatHolds
         for (BookingLegRequest leg : request.getLegs()) {
-            Trip trip = tripRepository.findById(leg.getTripId()).orElseThrow();
+            Trip trip = tripMap.get(leg.getTripId());
 
             SeatHold hold = new SeatHold();
             hold.setTrip(trip);
@@ -439,22 +442,24 @@ public class BookingServiceImpl implements BookingService {
     @Scheduled(fixedRate = 60000) // Run every minute
     @Transactional
     public void cancelExpiredHolds() {
-        List<Booking> expiredBookings = bookingRepository
-                .findByBookingStatusAndHoldExpiresAtBefore(BookingStatus.HOLDING, Instant.now());
+        Instant now = Instant.now();
+        List<Booking> expiredBookings = bookingRepository.findByBookingStatusInAndHoldExpiresAtBefore(
+                List.of(BookingStatus.HOLDING, BookingStatus.PENDING_PAYMENT),
+                now
+        );
 
         for (Booking booking : expiredBookings) {
             booking.setBookingStatus(BookingStatus.EXPIRED);
             bookingRepository.save(booking);
-
-            // Wait, we don't have findByBooking in SeatHoldRepository. Let's add it or rely
-            // on cascade.
-            // We can add findByBooking method to SeatHoldRepository. Let's assume we do
-            // this later or update status using DB query.
-            // For now, let's just mark Booking. The scheduler logic requires SeatHolds to
-            // be marked RELEASED, but since we query SeatHolds with `expiresAt > now()`,
-            // they automatically become invalid.
-            // So we don't strictly need to update HoldStatus to RELEASED for the logic to
-            // work, but it's cleaner.
+            List<SeatHold> holds = seatHoldRepository.findByBookingId(booking.getId());
+            for (SeatHold hold : holds) {
+                boolean shouldRelease = hold.getHoldStatus() == HoldStatus.HOLDING
+                        && (hold.getExpiresAt() == null || !hold.getExpiresAt().isAfter(now));
+                if (shouldRelease) {
+                    hold.setHoldStatus(HoldStatus.RELEASED);
+                    seatHoldRepository.save(hold);
+                }
+            }
         }
     }
 }

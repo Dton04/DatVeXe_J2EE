@@ -7,29 +7,23 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
 
 @Entity
-@Table(name = "stations")
-public class Station {
+@Table(name = "provinces")
+public class Province {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "station_id", nullable = false)
+    @Column(name = "province_id", nullable = false)
     private Long id;
 
     @Column(name = "name", nullable = false, length = 120)
     private String name;
 
-    @ManyToOne
-    @JoinColumn(name = "province_id", nullable = true)
-    private Province province;
-
-    @Column(name = "address", length = 255)
-    private String address;
+    @Column(name = "code", unique = true, length = 50)
+    private String code;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -65,20 +59,12 @@ public class Station {
         this.name = name;
     }
 
-    public Province getProvince() {
-        return province;
+    public String getCode() {
+        return code;
     }
 
-    public void setProvince(Province province) {
-        this.province = province;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public Instant getCreatedAt() {

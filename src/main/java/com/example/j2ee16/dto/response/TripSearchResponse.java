@@ -16,15 +16,19 @@ public class TripSearchResponse {
     @JsonProperty("layover_time")
     private String layoverTime; // e.g., "90 mins"
     
+    @JsonProperty("requires_station_transfer")
+    private Boolean requiresStationTransfer;
+    
     private List<TripLegResponse> legs;
 
     public TripSearchResponse() {
     }
 
-    public TripSearchResponse(String type, BigDecimal totalPrice, String layoverTime, List<TripLegResponse> legs) {
+    public TripSearchResponse(String type, BigDecimal totalPrice, String layoverTime, Boolean requiresStationTransfer, List<TripLegResponse> legs) {
         this.type = type;
         this.totalPrice = totalPrice;
         this.layoverTime = layoverTime;
+        this.requiresStationTransfer = requiresStationTransfer;
         this.legs = legs;
     }
 
@@ -58,5 +62,13 @@ public class TripSearchResponse {
 
     public void setLegs(List<TripLegResponse> legs) {
         this.legs = legs;
+    }
+
+    public Boolean getRequiresStationTransfer() {
+        return requiresStationTransfer;
+    }
+
+    public void setRequiresStationTransfer(Boolean requiresStationTransfer) {
+        this.requiresStationTransfer = requiresStationTransfer;
     }
 }

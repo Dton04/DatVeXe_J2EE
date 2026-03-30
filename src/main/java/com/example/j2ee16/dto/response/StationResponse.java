@@ -3,16 +3,18 @@ package com.example.j2ee16.dto.response;
 public class StationResponse {
     private Long id;
     private String name;
-    private String city;
+    private Long provinceId;
+    private String provinceName;
     private String address;
 
     public StationResponse() {
     }
 
-    public StationResponse(Long id, String name, String city, String address) {
+    public StationResponse(Long id, String name, Long provinceId, String provinceName, String address) {
         this.id = id;
         this.name = name;
-        this.city = city;
+        this.provinceId = provinceId;
+        this.provinceName = provinceName;
         this.address = address;
     }
 
@@ -32,12 +34,20 @@ public class StationResponse {
         this.name = name;
     }
 
-    public String getCity() {
-        return city;
+    public Long getProvinceId() {
+        return provinceId;
     }
 
-    public void setCity(String city) {
-        this.city = city;
+    public void setProvinceId(Long provinceId) {
+        this.provinceId = provinceId;
+    }
+
+    public String getProvinceName() {
+        return provinceName;
+    }
+
+    public void setProvinceName(String provinceName) {
+        this.provinceName = provinceName;
     }
 
     public String getAddress() {
