@@ -11,10 +11,17 @@ public class TripResponse {
     private String routeName;
     @JsonProperty("bus_plate")
     private String busPlate;
+    @JsonProperty("bus_type")
+    private String busType;
+    @JsonProperty("total_seats")
+    private Integer totalSeats;
     @JsonProperty("departure_time")
     private Instant departureTime;
+    @JsonProperty("arrival_time")
+    private Instant arrivalTime;
     @JsonProperty("actual_price")
     private BigDecimal actualPrice;
+    private String status;
 
     public TripResponse() {
     }
@@ -25,6 +32,19 @@ public class TripResponse {
         this.busPlate = busPlate;
         this.departureTime = departureTime;
         this.actualPrice = actualPrice;
+    }
+
+    public TripResponse(Long id, String routeName, String busPlate, String busType, Integer totalSeats,
+                        Instant departureTime, Instant arrivalTime, BigDecimal actualPrice, String status) {
+        this.id = id;
+        this.routeName = routeName;
+        this.busPlate = busPlate;
+        this.busType = busType;
+        this.totalSeats = totalSeats;
+        this.departureTime = departureTime;
+        this.arrivalTime = arrivalTime;
+        this.actualPrice = actualPrice;
+        this.status = status;
     }
 
     public Long getId() {
@@ -51,6 +71,22 @@ public class TripResponse {
         this.busPlate = busPlate;
     }
 
+    public String getBusType() {
+        return busType;
+    }
+
+    public void setBusType(String busType) {
+        this.busType = busType;
+    }
+
+    public Integer getTotalSeats() {
+        return totalSeats;
+    }
+
+    public void setTotalSeats(Integer totalSeats) {
+        this.totalSeats = totalSeats;
+    }
+
     public Instant getDepartureTime() {
         return departureTime;
     }
@@ -59,11 +95,27 @@ public class TripResponse {
         this.departureTime = departureTime;
     }
 
+    public Instant getArrivalTime() {
+        return arrivalTime;
+    }
+
+    public void setArrivalTime(Instant arrivalTime) {
+        this.arrivalTime = arrivalTime;
+    }
+
     public BigDecimal getActualPrice() {
         return actualPrice;
     }
 
     public void setActualPrice(BigDecimal actualPrice) {
         this.actualPrice = actualPrice;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

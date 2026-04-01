@@ -15,6 +15,8 @@ public interface TripService {
 
     TripResponse updateTrip(Long id, TripRequest request);
 
+    TripResponse updateTripStatus(Long id, String status);
+
     List<TripResponse> getAllTrips();
 
     List<TripSearchResponse> searchTrips(Long originProvinceId, Long destinationProvinceId, LocalDate date, Integer maxLegs,

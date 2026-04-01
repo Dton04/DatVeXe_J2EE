@@ -90,10 +90,33 @@ public class TripServiceImpl implements TripService {
                         trip.getId(),
                         trip.getRoute().getOrigin().getName() + " - " + trip.getRoute().getDestination().getName(),
                         trip.getBus().getLicensePlate(),
+                        trip.getBus().getBusType(),
+                        trip.getBus().getTotalSeats(),
                         trip.getDepartureTime(),
-                        trip.getActualPrice()
+                        trip.getArrivalTime(),
+                        trip.getActualPrice(),
+                        trip.getStatus() != null ? trip.getStatus().name() : null
                 ))
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public TripResponse updateTripStatus(Long id, String status) {
+        Trip trip = tripRepository.findById(id)
+                .orElseThrow(() -> new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Trip not found"));
+        trip.setStatus(TripStatus.valueOf(status));
+        Trip saved = tripRepository.save(trip);
+        return new TripResponse(
+                saved.getId(),
+                saved.getRoute().getOrigin().getName() + " - " + saved.getRoute().getDestination().getName(),
+                saved.getBus().getLicensePlate(),
+                saved.getBus().getBusType(),
+                saved.getBus().getTotalSeats(),
+                saved.getDepartureTime(),
+                saved.getArrivalTime(),
+                saved.getActualPrice(),
+                saved.getStatus() != null ? saved.getStatus().name() : null);
     }
 
     @Override
