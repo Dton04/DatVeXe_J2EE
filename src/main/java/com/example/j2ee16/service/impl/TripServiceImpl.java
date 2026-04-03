@@ -277,6 +277,10 @@ public class TripServiceImpl implements TripService {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Trip not found"));
 
+        if (trip.getBus() == null) {
+            throw new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR, "Trip does not have an assigned bus");
+        }
+
         List<Seat> busSeats = seatRepository.findByBusId(trip.getBus().getId());
         List<Ticket> activeTickets = ticketRepository.findByTripIdAndTicketStatus(tripId, TicketStatus.ACTIVE);
         List<SeatHold> activeHolds = seatHoldRepository.findByTripIdAndHoldStatusAndExpiresAtAfter(tripId, HoldStatus.HOLDING, Instant.now());

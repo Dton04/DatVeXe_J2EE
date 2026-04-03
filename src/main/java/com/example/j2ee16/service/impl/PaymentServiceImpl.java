@@ -23,6 +23,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final com.example.j2ee16.service.BookingService bookingService;
     private final com.example.j2ee16.service.WalletService walletService;
     private final com.example.j2ee16.config.VNPayConfig vnPayConfig;
+    private final com.example.j2ee16.service.EmailService emailService;
 
     public PaymentServiceImpl(BookingRepository bookingRepository, PaymentRepository paymentRepository,
                               com.example.j2ee16.service.BookingService bookingService,
@@ -33,6 +34,7 @@ public class PaymentServiceImpl implements PaymentService {
         this.bookingService = bookingService;
         this.walletService = walletService;
         this.vnPayConfig = vnPayConfig;
+        this.emailService = emailService;
     }
 
     @Override
@@ -172,6 +174,16 @@ public class PaymentServiceImpl implements PaymentService {
             bookingRepository.save(booking);
 
             bookingService.completeBooking(booking.getId());
+            
+            // Send email
+            if (booking.getUser() != null && booking.getUser().getEmail() != null) {
+                emailService.sendPaymentSuccessEmail(
+                    booking.getUser().getEmail(),
+                    booking.getCustomerName(),
+                    booking.getBookingCode(),
+                    booking.getTotalAmount()
+                );
+            }
         } else {
             payment.setStatus(PaymentStatus.FAILED);
         }

@@ -20,4 +20,11 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     List<Ticket> findByBookingIdIn(List<Long> bookingIds);
 
     java.util.Optional<Ticket> findByTicketCode(String ticketCode);
+
+    @org.springframework.data.jpa.repository.Query("SELECT t FROM Ticket t WHERE t.ticketStatus = :status AND t.reminderSent = false AND t.trip.departureTime BETWEEN :start AND :end")
+    List<Ticket> findUpcomingTicketsForReminder(
+        @org.springframework.data.repository.query.Param("status") TicketStatus status, 
+        @org.springframework.data.repository.query.Param("start") java.time.Instant start, 
+        @org.springframework.data.repository.query.Param("end") java.time.Instant end
+    );
 }

@@ -42,6 +42,9 @@ public class Ticket {
     @Column(name = "ticket_code", unique = true, length = 40)
     private String ticketCode;
 
+    @Column(name = "reminder_sent", columnDefinition = "boolean default false")
+    private Boolean reminderSent = false;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -171,5 +174,13 @@ public class Ticket {
 
     public void setTicketCode(String ticketCode) {
         this.ticketCode = ticketCode;
+    }
+
+    public Boolean getReminderSent() {
+        return reminderSent;
+    }
+
+    public void setReminderSent(Boolean reminderSent) {
+        this.reminderSent = reminderSent;
     }
 }
