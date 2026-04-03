@@ -23,6 +23,9 @@ public class TripRequest {
     @JsonProperty("price_modifier")
     private BigDecimal priceModifier;
 
+    @JsonProperty("driver_id")
+    private Long driverId;
+
     public Long getRouteId() {
         return routeId;
     }
@@ -53,5 +56,13 @@ public class TripRequest {
 
     public void setPriceModifier(BigDecimal priceModifier) {
         this.priceModifier = priceModifier;
+    }
+
+    public Long getDriverId() {
+        return driverId;
+    }
+
+    public void setDriverId(Long driverId) {
+        this.driverId = driverId;
     }
 }

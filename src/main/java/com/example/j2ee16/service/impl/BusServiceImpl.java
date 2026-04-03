@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -31,9 +32,9 @@ public class BusServiceImpl implements BusService {
     public BusResponse createBus(BusRequest request) {
         if (busRepository.existsByLicensePlate(request.getLicensePlate())) {
             throw new ApiException(
-                    ErrorCodeConstants.INTERNAL_SERVER_ERROR, // Should add LICENSE_PLATE_ALREADY_EXISTS
+                    ErrorCodeConstants.INTERNAL_SERVER_ERROR,
                     HttpStatus.CONFLICT,
-                    "Bus with this license plate already exists");
+                    "Xe với biển số này đã tồn tại");
         }
 
         Bus bus = new Bus();
@@ -44,14 +45,15 @@ public class BusServiceImpl implements BusService {
 
         Bus savedBus = busRepository.save(bus);
 
-        // Auto-generate seats
-        generateSeats(savedBus);
+        // Auto-generate seats right after creating bus
+        int seatsCreated = generateSeats(savedBus);
 
         return new BusResponse(
                 savedBus.getId(),
                 savedBus.getLicensePlate(),
                 savedBus.getTotalSeats(),
-                savedBus.getBusType());
+                savedBus.getBusType(),
+                seatsCreated);
     }
 
     @Override
@@ -59,13 +61,14 @@ public class BusServiceImpl implements BusService {
     public void generateSeatsForBus(Long busId) {
         Bus bus = busRepository.findById(busId)
                 .orElseThrow(() -> new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Bus not found"));
-        
-        // Remove existing seats if any (to avoid duplicates if re-running)
+
+        // Remove existing seats to avoid duplicates
         List<Seat> existingSeats = seatRepository.findByBusId(busId);
         if (!existingSeats.isEmpty()) {
             seatRepository.deleteAll(existingSeats);
+            seatRepository.flush();
         }
-        
+
         generateSeats(bus);
     }
 
@@ -77,25 +80,37 @@ public class BusServiceImpl implements BusService {
                         bus.getId(),
                         bus.getLicensePlate(),
                         bus.getTotalSeats(),
-                        bus.getBusType()
+                        bus.getBusType(),
+                        (int) seatRepository.findByBusId(bus.getId()).size()
                 ))
                 .toList();
     }
 
-    private void generateSeats(Bus bus) {
+    /**
+     * Generate seats for a bus and return the number of seats created.
+     * Seat label scheme:
+     *   - For standard buses (2 columns): A1..An | B1..Bn
+     *   - For large buses (3+ columns possible): uses rows of 4 (A,B left | C,D right)
+     * Currently using simple A/B column scheme.
+     */
+    private int generateSeats(Bus bus) {
         int totalSeats = bus.getTotalSeats();
         int rows = (int) Math.ceil((double) totalSeats / 2);
-        
+
+        List<Seat> seats = new ArrayList<>();
         for (int i = 0; i < totalSeats; i++) {
             Seat seat = new Seat();
             seat.setBus(bus);
-            
-            // Generate label: A1, A2, ..., B1, B2...
-            String prefix = (i < rows) ? "A" : "B";
-            int number = (i % rows) + 1;
-            seat.setSeatNumber(prefix + number);
-            
-            seatRepository.save(seat);
+
+            // A column first, then B column
+            String col = (i < rows) ? "A" : "B";
+            int rowNum = (i % rows) + 1;
+            seat.setSeatNumber(col + rowNum);
+
+            seats.add(seat);
         }
+
+        seatRepository.saveAll(seats);
+        return seats.size();
     }
 }

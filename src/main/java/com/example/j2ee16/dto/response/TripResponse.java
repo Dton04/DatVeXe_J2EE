@@ -22,6 +22,10 @@ public class TripResponse {
     @JsonProperty("actual_price")
     private BigDecimal actualPrice;
     private String status;
+    @JsonProperty("driver_id")
+    private Long driverId;
+    @JsonProperty("driver_name")
+    private String driverName;
 
     public TripResponse() {
     }
@@ -35,87 +39,56 @@ public class TripResponse {
     }
 
     public TripResponse(Long id, String routeName, String busPlate, String busType, Integer totalSeats,
+                        Instant departureTime, Instant arrivalTime, BigDecimal actualPrice, String status,
+                        Long driverId, String driverName) {
+        this.id = id;
+        this.routeName = routeName;
+        this.busPlate = busPlate;
+        this.busType = busType;
+        this.totalSeats = totalSeats;
+        this.departureTime = departureTime;
+        this.arrivalTime = arrivalTime;
+        this.actualPrice = actualPrice;
+        this.status = status;
+        this.driverId = driverId;
+        this.driverName = driverName;
+    }
+
+    public TripResponse(Long id, String routeName, String busPlate, String busType, Integer totalSeats,
                         Instant departureTime, Instant arrivalTime, BigDecimal actualPrice, String status) {
-        this.id = id;
-        this.routeName = routeName;
-        this.busPlate = busPlate;
-        this.busType = busType;
-        this.totalSeats = totalSeats;
-        this.departureTime = departureTime;
-        this.arrivalTime = arrivalTime;
-        this.actualPrice = actualPrice;
-        this.status = status;
+        this(id, routeName, busPlate, busType, totalSeats, departureTime, arrivalTime, actualPrice, status, null, null);
     }
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getRouteName() { return routeName; }
+    public void setRouteName(String routeName) { this.routeName = routeName; }
 
-    public String getRouteName() {
-        return routeName;
-    }
+    public String getBusPlate() { return busPlate; }
+    public void setBusPlate(String busPlate) { this.busPlate = busPlate; }
 
-    public void setRouteName(String routeName) {
-        this.routeName = routeName;
-    }
+    public String getBusType() { return busType; }
+    public void setBusType(String busType) { this.busType = busType; }
 
-    public String getBusPlate() {
-        return busPlate;
-    }
+    public Integer getTotalSeats() { return totalSeats; }
+    public void setTotalSeats(Integer totalSeats) { this.totalSeats = totalSeats; }
 
-    public void setBusPlate(String busPlate) {
-        this.busPlate = busPlate;
-    }
+    public Instant getDepartureTime() { return departureTime; }
+    public void setDepartureTime(Instant departureTime) { this.departureTime = departureTime; }
 
-    public String getBusType() {
-        return busType;
-    }
+    public Instant getArrivalTime() { return arrivalTime; }
+    public void setArrivalTime(Instant arrivalTime) { this.arrivalTime = arrivalTime; }
 
-    public void setBusType(String busType) {
-        this.busType = busType;
-    }
+    public BigDecimal getActualPrice() { return actualPrice; }
+    public void setActualPrice(BigDecimal actualPrice) { this.actualPrice = actualPrice; }
 
-    public Integer getTotalSeats() {
-        return totalSeats;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setTotalSeats(Integer totalSeats) {
-        this.totalSeats = totalSeats;
-    }
+    public Long getDriverId() { return driverId; }
+    public void setDriverId(Long driverId) { this.driverId = driverId; }
 
-    public Instant getDepartureTime() {
-        return departureTime;
-    }
-
-    public void setDepartureTime(Instant departureTime) {
-        this.departureTime = departureTime;
-    }
-
-    public Instant getArrivalTime() {
-        return arrivalTime;
-    }
-
-    public void setArrivalTime(Instant arrivalTime) {
-        this.arrivalTime = arrivalTime;
-    }
-
-    public BigDecimal getActualPrice() {
-        return actualPrice;
-    }
-
-    public void setActualPrice(BigDecimal actualPrice) {
-        this.actualPrice = actualPrice;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
+    public String getDriverName() { return driverName; }
+    public void setDriverName(String driverName) { this.driverName = driverName; }
 }

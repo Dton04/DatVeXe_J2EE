@@ -9,6 +9,7 @@ import com.example.j2ee16.entity.*;
 import com.example.j2ee16.exception.ApiException;
 import com.example.j2ee16.repository.*;
 import com.example.j2ee16.service.TripService;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,8 +18,15 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Comparator;
 
 @Service
 public class TripServiceImpl implements TripService {
@@ -28,16 +36,19 @@ public class TripServiceImpl implements TripService {
     private final SeatRepository seatRepository;
     private final TicketRepository ticketRepository;
     private final SeatHoldRepository seatHoldRepository;
+    private final UserRepository userRepository;
 
     public TripServiceImpl(TripRepository tripRepository, RouteRepository routeRepository,
                            BusRepository busRepository, SeatRepository seatRepository,
-                           TicketRepository ticketRepository, SeatHoldRepository seatHoldRepository) {
+                           TicketRepository ticketRepository, SeatHoldRepository seatHoldRepository,
+                           UserRepository userRepository) {
         this.tripRepository = tripRepository;
         this.routeRepository = routeRepository;
         this.busRepository = busRepository;
         this.seatRepository = seatRepository;
         this.ticketRepository = ticketRepository;
         this.seatHoldRepository = seatHoldRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -67,6 +78,15 @@ public class TripServiceImpl implements TripService {
 
             trip.setStatus(TripStatus.SCHEDULED);
 
+            if (request.getDriverId() != null) {
+                User driver = userRepository.findById(request.getDriverId())
+                        .orElseThrow(() -> new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Driver not found"));
+                if (driver.getRole() != UserRole.DRIVER) {
+                    throw new ApiException(ErrorCodeConstants.VALIDATION_ERROR, HttpStatus.BAD_REQUEST, "User is not a driver");
+                }
+                trip.setDriver(driver);
+            }
+
             // Calculate arrival time if estimated duration is available
             if (route.getEstimatedDuration() != null) {
                     trip.setArrivalTime(request.getDepartureTime().plus(Duration.ofMinutes(route.getEstimatedDuration())));
@@ -95,9 +115,28 @@ public class TripServiceImpl implements TripService {
                         trip.getDepartureTime(),
                         trip.getArrivalTime(),
                         trip.getActualPrice(),
-                        trip.getStatus() != null ? trip.getStatus().name() : null
+                        getComputedStatus(trip),
+                        trip.getDriver() != null ? trip.getDriver().getId() : null,
+                        trip.getDriver() != null ? trip.getDriver().getFullName() : null
                 ))
                 .toList();
+    }
+
+    private String getComputedStatus(Trip trip) {
+        if (trip.getStatus() == null) return "SCHEDULED";
+        if (trip.getStatus() == TripStatus.CANCELLED || trip.getStatus() == TripStatus.DELAYED) {
+            return trip.getStatus().name();
+        }
+        Instant now = Instant.now();
+        if (trip.getArrivalTime() != null && now.isAfter(trip.getArrivalTime())) {
+            return TripStatus.COMPLETED.name();
+        } else if (trip.getDepartureTime() != null && now.isAfter(trip.getDepartureTime())) {
+            if (trip.getArrivalTime() == null && now.isAfter(trip.getDepartureTime().plus(24, ChronoUnit.HOURS))) {
+                return TripStatus.COMPLETED.name();
+            }
+            return TripStatus.IN_PROGRESS.name();
+        }
+        return trip.getStatus().name();
     }
 
     @Override
@@ -149,6 +188,15 @@ public class TripServiceImpl implements TripService {
             trip.setBus(bus);
         }
 
+        if (request.getDriverId() != null) {
+            User driver = userRepository.findById(request.getDriverId())
+                    .orElseThrow(() -> new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Driver not found"));
+            if (driver.getRole() != UserRole.DRIVER) {
+                throw new ApiException(ErrorCodeConstants.VALIDATION_ERROR, HttpStatus.BAD_REQUEST, "User is not a driver");
+            }
+            trip.setDriver(driver);
+        }
+
         if (request.getDepartureTime() != null) {
             trip.setDepartureTime(request.getDepartureTime());
             if (trip.getRoute().getEstimatedDuration() != null) {
@@ -193,9 +241,9 @@ public class TripServiceImpl implements TripService {
             if (maxLegs != null && maxLegs >= 2) {
                 if (trip1.getArrivalTime() == null) continue;
 
-                // Layover Constraint: min 45m (or provided) to max 6 hours
+                // Layover Constraint: min 45m (or provided) to max 48 hours
                 Instant minDepartureParams = trip1.getArrivalTime().plus(Duration.ofMinutes(layover));
-                Instant maxDepartureParams = trip1.getArrivalTime().plus(Duration.ofHours(6));
+                Instant maxDepartureParams = trip1.getArrivalTime().plus(Duration.ofHours(48));
 
                 List<Trip> possibleTrip2s = tripRepository.findByOriginProvinceAndDestinationProvinceAndDepartureTimeBetween(
                         currentProvId, destinationProvinceId, minDepartureParams, maxDepartureParams);
@@ -205,7 +253,9 @@ public class TripServiceImpl implements TripService {
                             .equals(trip2.getRoute().getOrigin().getId());
 
                     long layoverDuration = Duration.between(trip1.getArrivalTime(), trip2.getDepartureTime()).toMinutes();
-                    String layoverStr = layoverDuration + " mins";
+                    long hours = layoverDuration / 60;
+                    long minutes = layoverDuration % 60;
+                    String layoverStr = hours > 0 ? hours + "h " + minutes + "m" : minutes + "m";
 
                     BigDecimal totalPrice = trip1.getActualPrice().add(trip2.getActualPrice());
 

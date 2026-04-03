@@ -126,10 +126,13 @@ public class BookingDetailResponse {
         private String seat;
         @JsonProperty("passenger")
         private String passenger;
+        @JsonProperty("ticket_code")
+        private String ticketCode;
 
-        public TicketItem(String seat, String passenger) {
+        public TicketItem(String seat, String passenger, String ticketCode) {
             this.seat = seat;
             this.passenger = passenger;
+            this.ticketCode = ticketCode;
         }
 
         public String getSeat() {
@@ -138,6 +141,10 @@ public class BookingDetailResponse {
 
         public String getPassenger() {
             return passenger;
+        }
+
+        public String getTicketCode() {
+            return ticketCode;
         }
     }
 

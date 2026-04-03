@@ -15,8 +15,13 @@ public class TicketController {
         this.ticketService = ticketService;
     }
 
-    @PatchMapping("/{id}/check-in")
-    public ResponseEntity<TicketResponse> checkIn(@PathVariable Long id) {
-        return ResponseEntity.ok(ticketService.checkIn(id));
+    /**
+     * Check-in by ticket_code (e.g. TK6-260402-A1) or by numeric ID.
+     * Both formats are supported for backward compatibility.
+     * Example: PATCH /api/v1/tickets/TK6-260402-A1/check-in
+     */
+    @PatchMapping("/{ticketCode}/check-in")
+    public ResponseEntity<TicketResponse> checkIn(@PathVariable String ticketCode) {
+        return ResponseEntity.ok(ticketService.checkInByCode(ticketCode));
     }
 }

@@ -10,6 +10,8 @@ public class BusResponse {
     private Integer totalSeats;
     @JsonProperty("bus_type")
     private String busType;
+    @JsonProperty("seats_generated")
+    private Integer seatsGenerated;
 
     public BusResponse() {
     }
@@ -19,37 +21,29 @@ public class BusResponse {
         this.licensePlate = licensePlate;
         this.totalSeats = totalSeats;
         this.busType = busType;
+        this.seatsGenerated = null;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
+    public BusResponse(Long id, String licensePlate, Integer totalSeats, String busType, Integer seatsGenerated) {
         this.id = id;
-    }
-
-    public String getLicensePlate() {
-        return licensePlate;
-    }
-
-    public void setLicensePlate(String licensePlate) {
         this.licensePlate = licensePlate;
-    }
-
-    public Integer getTotalSeats() {
-        return totalSeats;
-    }
-
-    public void setTotalSeats(Integer totalSeats) {
         this.totalSeats = totalSeats;
-    }
-
-    public String getBusType() {
-        return busType;
-    }
-
-    public void setBusType(String busType) {
         this.busType = busType;
+        this.seatsGenerated = seatsGenerated;
     }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getLicensePlate() { return licensePlate; }
+    public void setLicensePlate(String licensePlate) { this.licensePlate = licensePlate; }
+
+    public Integer getTotalSeats() { return totalSeats; }
+    public void setTotalSeats(Integer totalSeats) { this.totalSeats = totalSeats; }
+
+    public String getBusType() { return busType; }
+    public void setBusType(String busType) { this.busType = busType; }
+
+    public Integer getSeatsGenerated() { return seatsGenerated; }
+    public void setSeatsGenerated(Integer seatsGenerated) { this.seatsGenerated = seatsGenerated; }
 }

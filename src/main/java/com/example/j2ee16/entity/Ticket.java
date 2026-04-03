@@ -39,6 +39,9 @@ public class Ticket {
     @Column(name = "check_in_status", nullable = false)
     private CheckInStatus checkInStatus;
 
+    @Column(name = "ticket_code", unique = true, length = 40)
+    private String ticketCode;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -49,11 +52,26 @@ public class Ticket {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (ticketCode == null) {
+            generateTicketCode();
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    /** Generates TK{tripId}-{YYMMDD}-{seatUpper} e.g. TK6-260402-A1 */
+    public void generateTicketCode() {
+        String tripPart = trip != null ? String.valueOf(trip.getId()) : "0";
+        String datePart = "000000";
+        if (trip != null && trip.getDepartureTime() != null) {
+            datePart = java.time.LocalDate.ofInstant(trip.getDepartureTime(), java.time.ZoneId.of("Asia/Ho_Chi_Minh"))
+                    .format(java.time.format.DateTimeFormatter.ofPattern("yyMMdd"));
+        }
+        String seatPart = seatNumber != null ? seatNumber.toUpperCase().replaceAll("\\s+", "") : "XX";
+        this.ticketCode = "TK" + tripPart + "-" + datePart + "-" + seatPart;
     }
 
     public Ticket() {
@@ -145,5 +163,13 @@ public class Ticket {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getTicketCode() {
+        return ticketCode;
+    }
+
+    public void setTicketCode(String ticketCode) {
+        this.ticketCode = ticketCode;
     }
 }

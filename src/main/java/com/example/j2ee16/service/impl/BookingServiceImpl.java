@@ -401,7 +401,7 @@ public class BookingServiceImpl implements BookingService {
         List<BookingDetailResponse.TicketItem> ticketItems = new ArrayList<>();
         List<String> seatNumbers = new ArrayList<>();
         for (Ticket t : tickets) {
-            ticketItems.add(new BookingDetailResponse.TicketItem(t.getSeatNumber(), t.getPassengerName()));
+            ticketItems.add(new BookingDetailResponse.TicketItem(t.getSeatNumber(), t.getPassengerName(), t.getTicketCode()));
             seatNumbers.add(t.getSeatNumber());
         }
         String seatsJoined = String.join(",", seatNumbers);

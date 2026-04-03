@@ -15,4 +15,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByBookingStatusAndHoldExpiresAtBefore(BookingStatus status, Instant time);
     List<Booking> findByBookingStatusInAndHoldExpiresAtBefore(List<BookingStatus> statuses, Instant time);
     List<Booking> findByUserEmail(String email);
+
+    @org.springframework.data.jpa.repository.Query("SELECT SUM(b.totalAmount) FROM Booking b WHERE b.bookingStatus IN :statuses AND b.createdAt BETWEEN :start AND :end")
+    java.math.BigDecimal sumRevenueByStatusInAndDateBetween(
+            @org.springframework.data.repository.query.Param("statuses") List<BookingStatus> statuses,
+            @org.springframework.data.repository.query.Param("start") Instant start,
+            @org.springframework.data.repository.query.Param("end") Instant end);
 }

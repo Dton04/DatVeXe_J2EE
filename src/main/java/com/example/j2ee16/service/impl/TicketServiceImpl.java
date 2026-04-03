@@ -36,6 +36,28 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    @Transactional
+    public TicketResponse checkInByCode(String ticketCode) {
+        // Try numeric ID first (backward compat), then ticket_code
+        Ticket ticket;
+        try {
+            Long numId = Long.parseLong(ticketCode.trim());
+            ticket = ticketRepository.findById(numId)
+                    .orElseThrow(() -> new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Ticket not found"));
+        } catch (NumberFormatException e) {
+            ticket = ticketRepository.findByTicketCode(ticketCode.trim().toUpperCase())
+                    .orElseThrow(() -> new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "Ticket not found: " + ticketCode));
+        }
+
+        if (ticket.getCheckInStatus() == CheckInStatus.ON_BOARD) {
+            throw new ApiException(ErrorCodeConstants.INTERNAL_SERVER_ERROR, HttpStatus.CONFLICT, "Ticket already checked in");
+        }
+
+        ticket.setCheckInStatus(CheckInStatus.ON_BOARD);
+        return mapToResponse(ticketRepository.save(ticket));
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<TicketResponse> getPassengersByTrip(Long tripId) {
         List<Ticket> tickets = ticketRepository.findByTripId(tripId);
@@ -47,6 +69,7 @@ public class TicketServiceImpl implements TicketService {
     private TicketResponse mapToResponse(Ticket ticket) {
         return new TicketResponse(
                 ticket.getId(),
+                ticket.getTicketCode(),
                 ticket.getSeatNumber(),
                 ticket.getPassengerName(),
                 ticket.getPhone(),

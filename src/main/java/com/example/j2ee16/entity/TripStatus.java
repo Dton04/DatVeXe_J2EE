@@ -2,8 +2,8 @@ package com.example.j2ee16.entity;
 
 public enum TripStatus {
     SCHEDULED,
-    RUNNING,
-    ARRIVED,
+    IN_PROGRESS,
+    COMPLETED,
     CANCELLED,
     DELAYED
 }
