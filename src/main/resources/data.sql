@@ -71,3 +71,16 @@ BEGIN
   END IF; 
   UPDATE stations SET province_id = (SELECT id FROM provinces LIMIT 1) WHERE province_id IS NULL; 
 END $$;
+
+-- Default Wallet Promotion Rules
+INSERT INTO wallet_promotion_rules (min_amount, max_amount, bonus_percentage, active)
+SELECT 0, 499999, 0, true
+WHERE NOT EXISTS (SELECT 1 FROM wallet_promotion_rules WHERE min_amount = 0);
+
+INSERT INTO wallet_promotion_rules (min_amount, max_amount, bonus_percentage, active)
+SELECT 500000, 999999, 15, true
+WHERE NOT EXISTS (SELECT 1 FROM wallet_promotion_rules WHERE min_amount = 500000);
+
+INSERT INTO wallet_promotion_rules (min_amount, max_amount, bonus_percentage, active)
+SELECT 1000000, NULL, 18, true
+WHERE NOT EXISTS (SELECT 1 FROM wallet_promotion_rules WHERE min_amount = 1000000);

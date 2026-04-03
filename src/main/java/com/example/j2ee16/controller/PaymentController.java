@@ -6,6 +6,7 @@ import com.example.j2ee16.service.PaymentService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import com.example.j2ee16.service.WalletService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.bind.annotation.*;
@@ -19,10 +20,12 @@ import java.util.Map;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final WalletService walletService;
     private final String frontendBaseUrl;
 
-    public PaymentController(PaymentService paymentService, @Value("${app.frontend.base-url}") String frontendBaseUrl) {
+    public PaymentController(PaymentService paymentService, WalletService walletService, @Value("${app.frontend.base-url}") String frontendBaseUrl) {
         this.paymentService = paymentService;
+        this.walletService = walletService;
         this.frontendBaseUrl = frontendBaseUrl;
     }
 
@@ -39,7 +42,11 @@ public class PaymentController {
 
         String paymentStatus = "00".equals(responseCode) ? "success" : "failed";
         try {
-            paymentService.handlePaymentCallback(params);
+            if (txnRef.startsWith("WAL-")) {
+                walletService.handleDepositCallback(params);
+            } else {
+                paymentService.handlePaymentCallback(params);
+            }
         } catch (Exception ex) {
             paymentStatus = "failed";
         }
