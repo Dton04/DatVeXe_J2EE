@@ -39,10 +39,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpectedException(Exception exception) {
+        exception.printStackTrace(); // Dump to console
         ApiErrorResponse response = new ApiErrorResponse(
                 ErrorCodeConstants.INTERNAL_SERVER_ERROR,
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Unexpected error"
+                "Unexpected error: " + exception.getClass().getSimpleName() + " - " + exception.getMessage()
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }

@@ -12,7 +12,6 @@ import com.example.j2ee16.constants.ErrorCodeConstants;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,7 +37,6 @@ public class WalletController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'STAFF')")
     public ResponseEntity<WalletDTO> getWallet(Authentication authentication) {
         User user = getAuthenticatedUser(authentication);
         WalletDTO response = walletService.getWalletByUserId(user.getId());
@@ -46,19 +44,30 @@ public class WalletController {
     }
 
     @GetMapping("/transactions")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'STAFF')")
     public ResponseEntity<java.util.List<WalletTransactionDTO>> getTransactions(Authentication authentication) {
         User user = getAuthenticatedUser(authentication);
         return ResponseEntity.ok(walletService.getTransactions(user.getId()));
     }
 
     @PostMapping("/deposit")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'STAFF')")
     public ResponseEntity<PaymentResponse> deposit(
             Authentication authentication,
             @Valid @RequestBody WalletDepositRequest request) {
         User user = getAuthenticatedUser(authentication);
         PaymentResponse response = walletService.initiateDeposit(user.getId(), request);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/balance-check")
+    public ResponseEntity<java.util.Map<String, Object>> checkBalance(
+            Authentication authentication,
+            @RequestParam java.math.BigDecimal amount) {
+        User user = getAuthenticatedUser(authentication);
+        WalletDTO wallet = walletService.getWalletByUserId(user.getId());
+        boolean sufficient = wallet.getBalance().compareTo(amount) >= 0;
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("sufficient", sufficient);
+        result.put("balance", wallet.getBalance());
+        return ResponseEntity.ok(result);
     }
 }

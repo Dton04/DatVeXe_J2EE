@@ -1,7 +1,7 @@
 package com.example.j2ee16.dto.response;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public class WalletTransactionDTO {
     private Long id;
@@ -10,12 +10,12 @@ public class WalletTransactionDTO {
     private String status;
     private String reference;
     private String description;
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     public WalletTransactionDTO() {
     }
 
-    public WalletTransactionDTO(Long id, BigDecimal amount, String type, String status, String reference, String description, LocalDateTime createdAt) {
+    public WalletTransactionDTO(Long id, BigDecimal amount, String type, String status, String reference, String description, Instant createdAt) {
         this.id = id;
         this.amount = amount;
         this.type = type;
@@ -43,6 +43,6 @@ public class WalletTransactionDTO {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

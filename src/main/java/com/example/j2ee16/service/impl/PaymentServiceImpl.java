@@ -87,7 +87,7 @@ public class PaymentServiceImpl implements PaymentService {
         vnp_Params.put("vnp_CurrCode", "VND");
         
         // Need to add timezone logic. Using simple pattern here
-        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(java.time.ZoneId.of("GMT+7"));
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(java.time.ZoneId.of("+07:00"));
         String vnp_CreateDate = formatter.format(java.time.Instant.now());
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
 

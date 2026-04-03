@@ -17,6 +17,8 @@ import com.example.j2ee16.service.WalletService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.jdbc.core.JdbcTemplate;
+import jakarta.annotation.PostConstruct;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -30,19 +32,64 @@ public class WalletServiceImpl implements WalletService {
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
     private final VNPayConfig vnPayConfig;
+    private final JdbcTemplate jdbcTemplate;
 
     public WalletServiceImpl(WalletRepository walletRepository, 
                              WalletTransactionRepository walletTransactionRepository,
                              WalletPromotionRuleRepository ruleRepository,
                              UserRepository userRepository,
                              BookingRepository bookingRepository,
-                             VNPayConfig vnPayConfig) {
+                             VNPayConfig vnPayConfig,
+                             JdbcTemplate jdbcTemplate) {
         this.walletRepository = walletRepository;
         this.walletTransactionRepository = walletTransactionRepository;
         this.ruleRepository = ruleRepository;
         this.userRepository = userRepository;
         this.bookingRepository = bookingRepository;
         this.vnPayConfig = vnPayConfig;
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    @PostConstruct
+    public void fixDatabaseSchema() {
+        try {
+            jdbcTemplate.execute("ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS wallet_id BIGINT");
+            jdbcTemplate.execute("ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS type VARCHAR(255)");
+            jdbcTemplate.execute("ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS status VARCHAR(255)");
+            jdbcTemplate.execute("ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS description VARCHAR(255)");
+            jdbcTemplate.execute("ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS reference VARCHAR(255)");
+            jdbcTemplate.execute("ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS amount NUMERIC(15,2)");
+            try {
+                jdbcTemplate.execute("ALTER TABLE wallet_transactions ALTER COLUMN total_amount DROP NOT NULL");
+            } catch (Exception ignore) {}
+            try {
+                jdbcTemplate.execute("ALTER TABLE wallet_transactions ALTER COLUMN transaction_ref DROP NOT NULL");
+            } catch (Exception ignore) {}
+            try {
+                jdbcTemplate.execute("ALTER TABLE wallet_transactions ALTER COLUMN payment_method DROP NOT NULL");
+            } catch (Exception ignore) {}
+            try {
+                jdbcTemplate.execute("ALTER TABLE wallet_transactions ALTER COLUMN booking_id DROP NOT NULL");
+            } catch (Exception ignore) {}
+            try {
+                jdbcTemplate.execute("ALTER TABLE wallet_transactions ALTER COLUMN user_id DROP NOT NULL");
+            } catch (Exception ignore) {}
+            try {
+                jdbcTemplate.execute("ALTER TABLE wallet_transactions DROP CONSTRAINT IF EXISTS wallet_transactions_type_check");
+                jdbcTemplate.execute("ALTER TABLE wallet_transactions ADD CONSTRAINT wallet_transactions_type_check CHECK (type::text IN ('DEPOSIT', 'PAYMENT', 'REFUND')) NOT VALID");
+            } catch (Exception ignore) {}
+            try {
+                jdbcTemplate.execute("ALTER TABLE wallet_transactions DROP CONSTRAINT IF EXISTS wallet_transactions_status_check");
+                jdbcTemplate.execute("ALTER TABLE wallet_transactions ADD CONSTRAINT wallet_transactions_status_check CHECK (status::text IN ('PENDING', 'SUCCESS', 'UNPAID', 'PAID', 'FAILED', 'REFUNDED')) NOT VALID");
+            } catch (Exception ignore) {}
+            // Fix payments table - add WALLET to payment_method check
+            try {
+                jdbcTemplate.execute("ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_payment_method_check");
+                jdbcTemplate.execute("ALTER TABLE payments ADD CONSTRAINT payments_payment_method_check CHECK (payment_method::text IN ('VNPAY', 'WALLET', 'CASH', 'CREDIT_CARD', 'BANK_TRANSFER')) NOT VALID");
+            } catch (Exception ignore) {}
+        } catch (Exception e) {
+            System.out.println("Could not run schema alterations: " + e.getMessage());
+        }
     }
 
     private Wallet getOrCreateWallet(User user) {
@@ -89,7 +136,7 @@ public class WalletServiceImpl implements WalletService {
         vnp_Params.put("vnp_Amount", String.valueOf(request.getAmount().multiply(new BigDecimal(100)).longValue()));
         vnp_Params.put("vnp_CurrCode", "VND");
         
-        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(java.time.ZoneId.of("GMT+7"));
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(java.time.ZoneId.of("+07:00"));
         String vnp_CreateDate = formatter.format(java.time.Instant.now());
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
 
