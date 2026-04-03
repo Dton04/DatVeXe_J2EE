@@ -7,6 +7,7 @@ import com.example.j2ee16.entity.*;
 import com.example.j2ee16.exception.ApiException;
 import com.example.j2ee16.repository.*;
 import com.example.j2ee16.service.PaymentService;
+import com.example.j2ee16.service.WalletService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,16 +21,18 @@ public class PaymentServiceImpl implements PaymentService {
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
     private final com.example.j2ee16.service.BookingService bookingService;
+    private final com.example.j2ee16.service.WalletService walletService;
     private final com.example.j2ee16.config.VNPayConfig vnPayConfig;
     private final com.example.j2ee16.service.EmailService emailService;
 
     public PaymentServiceImpl(BookingRepository bookingRepository, PaymentRepository paymentRepository,
                               com.example.j2ee16.service.BookingService bookingService,
-                              com.example.j2ee16.config.VNPayConfig vnPayConfig,
-                              com.example.j2ee16.service.EmailService emailService) {
+                              com.example.j2ee16.service.WalletService walletService,
+                              com.example.j2ee16.config.VNPayConfig vnPayConfig) {
         this.bookingRepository = bookingRepository;
         this.paymentRepository = paymentRepository;
         this.bookingService = bookingService;
+        this.walletService = walletService;
         this.vnPayConfig = vnPayConfig;
         this.emailService = emailService;
     }
@@ -59,6 +62,20 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setStatus(PaymentStatus.PENDING);
 
         paymentRepository.save(payment);
+
+        if ("WALLET".equalsIgnoreCase(request.getPaymentMethod())) {
+             walletService.payWithWallet(booking.getUser().getId(), booking.getId());
+             
+             payment.setStatus(PaymentStatus.SUCCESS);
+             paymentRepository.save(payment);
+             
+             booking.setPaymentStatus(PaymentStatus.PAID);
+             booking.setBookingStatus(BookingStatus.CONFIRMED);
+             bookingRepository.save(booking);
+             bookingService.completeBooking(booking.getId());
+             
+             return new PaymentResponse("WALLET_SUCCESS", transactionRef);
+        }
 
         booking.setBookingStatus(BookingStatus.PENDING_PAYMENT);
         bookingRepository.save(booking);
