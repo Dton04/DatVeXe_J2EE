@@ -5,6 +5,7 @@ import com.example.j2ee16.constants.ErrorCodeConstants;
 import com.example.j2ee16.dto.request.WalletDepositRequest;
 import com.example.j2ee16.dto.response.PaymentResponse;
 import com.example.j2ee16.dto.response.WalletDTO;
+import com.example.j2ee16.dto.response.WalletTransactionDTO;
 import com.example.j2ee16.entity.*;
 import com.example.j2ee16.exception.ApiException;
 import com.example.j2ee16.repository.UserRepository;
@@ -217,5 +218,24 @@ public class WalletServiceImpl implements WalletService {
         tx.setReference("BKG-" + booking.getId());
         tx.setDescription("Paid for booking " + booking.getId());
         walletTransactionRepository.save(tx);
+    }
+
+    @Override
+    public List<WalletTransactionDTO> getTransactions(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(ErrorCodeConstants.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND, "User not found"));
+        Wallet wallet = getOrCreateWallet(user);
+        
+        return walletTransactionRepository.findByWalletIdOrderByCreatedAtDesc(wallet.getId()).stream().map(tx -> {
+            WalletTransactionDTO dto = new WalletTransactionDTO();
+            dto.setId(tx.getId());
+            dto.setAmount(tx.getAmount());
+            dto.setType(tx.getType().name());
+            dto.setStatus(tx.getStatus() != null ? tx.getStatus().name() : "");
+            dto.setReference(tx.getReference());
+            dto.setDescription(tx.getDescription());
+            dto.setCreatedAt(tx.getCreatedAt());
+            return dto;
+        }).toList();
     }
 }

@@ -11,4 +11,5 @@ public interface WalletService {
     PaymentResponse initiateDeposit(Long userId, WalletDepositRequest request);
     void handleDepositCallback(Map<String, String> params);
     void payWithWallet(Long userId, Long bookingId);
+    java.util.List<com.example.j2ee16.dto.response.WalletTransactionDTO> getTransactions(Long userId);
 }

@@ -3,6 +3,7 @@ package com.example.j2ee16.controller;
 import com.example.j2ee16.dto.request.WalletDepositRequest;
 import com.example.j2ee16.dto.response.PaymentResponse;
 import com.example.j2ee16.dto.response.WalletDTO;
+import com.example.j2ee16.dto.response.WalletTransactionDTO;
 import com.example.j2ee16.service.WalletService;
 import com.example.j2ee16.repository.UserRepository;
 import com.example.j2ee16.entity.User;
@@ -42,6 +43,13 @@ public class WalletController {
         User user = getAuthenticatedUser(authentication);
         WalletDTO response = walletService.getWalletByUserId(user.getId());
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/transactions")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'STAFF')")
+    public ResponseEntity<java.util.List<WalletTransactionDTO>> getTransactions(Authentication authentication) {
+        User user = getAuthenticatedUser(authentication);
+        return ResponseEntity.ok(walletService.getTransactions(user.getId()));
     }
 
     @PostMapping("/deposit")
